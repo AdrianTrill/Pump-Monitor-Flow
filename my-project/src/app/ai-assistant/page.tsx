@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { motion, Variants } from "framer-motion";
+import { MagnifyingGlassIcon, SparklesIcon, ChatBubbleLeftRightIcon, LightBulbIcon } from "@heroicons/react/24/outline";
 import {
   BarChart,
   Bar,
@@ -10,56 +11,22 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import AnimatedCounter from "../components/AnimatedCounter";
 
-const mockMessages = [
-  {
-    sender: "assistant",
-    text:
-      "Hello! I'm your AI assistant. I can help you analyze pump performance, predict failures, and provide maintenance recommendations. What would you like to know?",
-  },
-  {
-    sender: "user",
-    text: "Show me pumps with temperature issues",
-  },
-  {
-    sender: "assistant",
-    text:
-      "I found 2 pumps with temperature-related concerns:\n• Transfer Pump C2 (P003): Currently at 105°F - Critical level\n• Booster Pump B3 (P002): Running at 92°F - Above normal range",
-  },
-];
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+}
 
-const suggestions = [
-  {
-    title: "Schedule inspection for Pump A23",
-    desc: "Bearing wear detected with 85% confidence",
-    color: "bg-[#fef2f2] border-[#fca5a5]",
-    button: { label: "Schedule Now", color: "bg-[#3D5DE8] text-white hover:bg-[#274bb6]" },
-  },
-  {
-    title: "Review lubrication schedule",
-    desc: "Multiple pumps showing increased friction",
-    color: "bg-[#fefce8] border-[#fde047]",
-    button: { label: "View Details", color: "bg-[#3D5DE8] text-white hover:bg-[#274bb6]" },
-  },
-  {
-    title: "Temperature monitoring alert",
-    desc: "Unit C pumps running above normal range",
-    color: "bg-[#fef2f2] border-[#fca5a5]",
-    button: { label: "Investigate", color: "bg-[#3D5DE8] text-white hover:bg-[#274bb6]" },
-  },
-  {
-    title: "Preventive maintenance due",
-    desc: "5 pumps approaching maintenance interval",
-    color: "bg-[#dbeafe] border-[#93c5fd]",
-    button: { label: "Plan Maintenance", color: "bg-[#3D5DE8] text-white hover:bg-[#274bb6]" },
-  },
-];
+interface ChatSuggestion {
+  suggestions: string[];
+}
 
 const anomalyCorrelations = [
-  { name: "Vibration + Heat", value: 0.85 },
-  { name: "Pressure + Flow", value: 0.75 },
-  { name: "Heat + Power", value: 0.6 },
-  { name: "Vibration + Pressure", value: 0.4 },
+  { name: "Vibration + Heat", value: 85 },
+  { name: "Pressure + Flow", value: 75 },
+  { name: "Heat + Power", value: 60 },
+  { name: "Vibration + Pressure", value: 40 },
 ];
 
 const keyFindings = [
@@ -68,10 +35,104 @@ const keyFindings = [
   "Most failures preceded by combined sensor anomalies",
 ];
 
+const insights = [
+  {
+    title: "Schedule inspection for Pump A23",
+    desc: "Bearing wear detected with 85% confidence",
+    color: "bg-red-50 border-red-200",
+    button: { label: "Schedule Now", color: "bg-[#3D5DE8] text-white hover:bg-[#274bb6]" },
+    icon: SparklesIcon,
+    iconColor: "text-red-500",
+    confidence: 85,
+  },
+  {
+    title: "Review lubrication schedule",
+    desc: "Multiple pumps showing increased friction",
+    color: "bg-yellow-50 border-yellow-200",
+    button: { label: "View Details", color: "bg-[#3D5DE8] text-white hover:bg-[#274bb6]" },
+    icon: LightBulbIcon,
+    iconColor: "text-yellow-500",
+    confidence: 78,
+  },
+  {
+    title: "Temperature monitoring alert",
+    desc: "Unit C pumps running above normal range",
+    color: "bg-red-50 border-red-200",
+    button: { label: "Investigate", color: "bg-[#3D5DE8] text-white hover:bg-[#274bb6]" },
+    icon: SparklesIcon,
+    iconColor: "text-red-500",
+    confidence: 92,
+  },
+  {
+    title: "Preventive maintenance due",
+    desc: "5 pumps approaching maintenance interval",
+    color: "bg-blue-50 border-blue-200",
+    button: { label: "Plan Maintenance", color: "bg-[#3D5DE8] text-white hover:bg-[#274bb6]" },
+    icon: LightBulbIcon,
+    iconColor: "text-blue-500",
+    confidence: 95,
+  },
+];
+
+import { apiClient } from "../lib/api-client";
+
+// --- Animation Variants ---
+const pageVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.6, ease: "easeOut" } },
+};
+
+const headerVariants: Variants = {
+  hidden: { y: -30, opacity: 0 },
+  visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } },
+};
+
+const searchVariants: Variants = {
+  hidden: { y: 20, opacity: 0, scale: 0.95 },
+  visible: { y: 0, opacity: 1, scale: 1, transition: { duration: 0.5, delay: 0.2 } },
+};
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.3 } },
+};
+
+const itemVariants: Variants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100 } },
+};
+
+const cardVariants: Variants = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.4 } },
+  hover: { 
+    scale: 1.02, 
+    transition: { type: "spring", stiffness: 300 } 
+  },
+};
+
+const messageVariants: Variants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+};
+
 export default function AiAssistantPage() {
-  const [messages, setMessages] = useState(mockMessages);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: "assistant",
+      content: "Hello! I'm your AI assistant for pump monitoring and predictive maintenance. I can help you analyze pump performance, investigate alerts, predict failures, and provide maintenance recommendations. What would you like to know?"
+    }
+  ]);
   const [input, setInput] = useState("");
   const [search, setSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [chatSuggestions, setChatSuggestions] = useState<string[]>([
+    "What's the overall system health?",
+    "Show me all pump statuses", 
+    "Which pumps have critical alerts?",
+    "Tell me about maintenance schedules"
+  ]);
+  
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -80,84 +141,321 @@ export default function AiAssistantPage() {
     }
   }, [messages]);
 
-  function handleSend() {
-    if (input.trim()) {
-      setMessages([...messages, { sender: "user", text: input }]);
-      setInput("");
-      setTimeout(() => {
-        setMessages((msgs) => [
-          ...msgs,
-          { sender: "assistant", text: "(AI response placeholder)" },
-        ]);
-      }, 800);
+  // Generate initial suggestions after the first message
+  useEffect(() => {
+    if (messages.length === 1 && messages[0].role === "assistant") {
+      getChatSuggestions("", messages);
     }
-  }
+  }, [messages.length]);
+
+  const getChatSuggestions = async (lastMessage: string, currentMessages: Message[]) => {
+    try {
+      const response = await apiClient.getChatSuggestions(
+        lastMessage, 
+        currentMessages.slice(0, -1).map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }))
+      );
+
+      if (response.data) {
+        setChatSuggestions((response.data as ChatSuggestion).suggestions || []);
+      }
+    } catch (error) {
+      console.error("Error getting suggestions:", error);
+    }
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (search.trim()) {
+      setInput(search);
+      setSearch("");
+      // Trigger the send immediately
+      const messageToSend = search.trim();
+      setIsLoading(true);
+
+      // Add user message
+      const newMessages = [...messages, { role: "user" as const, content: messageToSend }];
+      setMessages(newMessages);
+
+      // Send the message (same logic as handleSend)
+      handleSendMessage(messageToSend, newMessages);
+    }
+  };
+
+  const handleSendMessage = async (messageToSend: string, newMessages: Message[]) => {
+    try {
+      // Stream the response using API client
+      const response = await apiClient.streamChatMessage(messageToSend, messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      })));
+
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No reader available");
+
+      let assistantMessage = "";
+      const decoder = new TextDecoder();
+
+      // Add empty assistant message that we'll update
+      setMessages(prev => [...prev, { role: "assistant", content: "" }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        assistantMessage += chunk;
+
+        // Update the last assistant message
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: "assistant", content: assistantMessage };
+          return updated;
+        });
+      }
+
+      // Get suggestions for the conversation
+      await getChatSuggestions(messageToSend, [...newMessages, { role: "assistant", content: assistantMessage }]);
+
+    } catch (error) {
+      console.error("Error sending message:", error);
+      setMessages(prev => [...prev, { 
+        role: "assistant", 
+        content: "I apologize, but I encountered an error processing your request. Please try again." 
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSend = async () => {
+    const messageToSend = input.trim();
+    if (!messageToSend) return;
+
+    setInput("");
+    setIsLoading(true);
+
+    // Add user message
+    const newMessages = [...messages, { role: "user" as const, content: messageToSend }];
+    setMessages(newMessages);
+
+    await handleSendMessage(messageToSend, newMessages);
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setInput(suggestion);
+  };
 
   return (
-    <div className="min-h-screen bg-[#f7f8fa] flex flex-col">
-      <div className="w-full flex-1 flex flex-col pt-8 pb-8 px-8">
+    <motion.div 
+      initial="hidden"
+      animate="visible" 
+      variants={pageVariants}
+      className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100"
+    >
+      <div className="max-w-[1600px] mx-auto px-6 sm:px-8 lg:px-12 py-10">
+        
         {/* Page Title */}
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 text-center mb-6">AI Assistant</h1>
+        <motion.div variants={headerVariants} className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <motion.div
+              initial={{ rotate: 0 }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, ease: "easeInOut" }}
+            >
+              <SparklesIcon className="w-10 h-10 text-[#3D5DE8]" />
+            </motion.div>
+            <h1 className="text-4xl font-bold text-slate-800">AI Assistant</h1>
+          </div>
+          <p className="text-slate-600 text-lg">Intelligent insights and recommendations for optimal pump performance</p>
+        </motion.div>
+        
         {/* Large Search Bar */}
-        <div className="flex justify-center mb-8">
-          <div className="relative w-full max-w-4xl">
-            <input
-              className="w-full border border-gray-300 rounded-lg pl-12 pr-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] bg-white shadow-sm text-gray-900 placeholder:text-gray-400"
+        <motion.div variants={searchVariants} className="flex justify-center mb-12">
+          <form onSubmit={handleSearchSubmit} className="relative w-full max-w-5xl">
+            <motion.input
+              className="w-full border-2 border-gray-200 rounded-2xl pl-14 pr-28 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] focus:border-[#3D5DE8] bg-white/80 backdrop-blur-sm shadow-xl text-gray-900 placeholder:text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="Ask me anything about your pumps... (e.g., 'Show pumps with overheating risk')"
               value={search}
               onChange={e => setSearch(e.target.value)}
+              disabled={isLoading}
+              whileFocus={{ scale: 1.02 }}
+              whileHover={!isLoading ? { scale: 1.01 } : {}}
+              transition={{ type: "spring", stiffness: 300 }}
             />
-            <MagnifyingGlassIcon className="w-6 h-6 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-          </div>
-        </div>
+            <MagnifyingGlassIcon className="w-6 h-6 text-gray-400 absolute left-5 top-1/2 -translate-y-1/2" />
+            <motion.button
+              type="submit"
+              className="absolute right-3 top-1/2 -translate-y-1/2 bg-[#3D5DE8] text-white px-6 py-2 rounded-xl hover:bg-[#274bb6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading || !search.trim()}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Search
+            </motion.button>
+          </form>
+        </motion.div>
+        
         {/* Main Content: Suggestions + Chat */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 mb-10">
           {/* AI Suggestions Card */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-            <div className="font-semibold text-gray-900 text-lg mb-4">AI Suggestions</div>
-            <div className="flex flex-col gap-4">
-              {suggestions.map((s, i) => (
-                <div
+          <motion.div 
+            variants={cardVariants}
+            className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/50 shadow-xl p-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <LightBulbIcon className="w-6 h-6 text-[#3D5DE8]" />
+              <div className="font-semibold text-gray-900 text-xl">AI Insights</div>
+            </div>
+            <motion.div 
+              className="flex flex-col gap-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {insights.map((s, i) => (
+                <motion.div
                   key={i}
-                  className={`border ${s.color} rounded-xl px-6 py-4 flex items-center justify-between min-h-[92px] shadow-sm`}
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.02, transition: { type: "spring", stiffness: 300 } }}
+                  className={`border-2 ${s.color} rounded-xl px-6 py-4 flex items-center justify-between shadow-sm`}
                 >
-                  <div>
-                    <div className="font-semibold text-gray-900 text-base mb-1">{s.title}</div>
-                    <div className="text-gray-700 text-sm">{s.desc}</div>
+                  <div className="flex items-start gap-3">
+                    <s.icon className={`w-5 h-5 ${s.iconColor} mt-1`} />
+                    <div>
+                      <div className="font-semibold text-gray-900 text-base mb-1">{s.title}</div>
+                      <div className="text-gray-700 text-sm mb-2">{s.desc}</div>
+                      <div className="text-xs text-gray-500 font-medium">
+                        Confidence: <AnimatedCounter to={s.confidence} />%
+                      </div>
+                    </div>
                   </div>
-                  <button
-                    className={`px-4 py-2 rounded-lg font-normal text-sm transition ${s.button.color}`}
+                  <motion.button
+                    className={`px-4 py-2 rounded-lg font-medium text-sm transition ${s.button.color}`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
                     {s.button.label}
-                  </button>
-                </div>
+                  </motion.button>
+                </motion.div>
               ))}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
           
           {/* AI Chat Card */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+          <motion.div 
+            variants={cardVariants}
+            className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/50 shadow-xl"
+          >
             <div className="p-6 border-b border-gray-200">
-              <div className="font-semibold text-gray-900 text-lg">AI Chat</div>
+              <div className="flex items-center gap-3">
+                <ChatBubbleLeftRightIcon className="w-6 h-6 text-[#3D5DE8]" />
+                <div className="font-semibold text-gray-900 text-xl">AI Chat</div>
+              </div>
             </div>
             <div className="flex flex-col h-[420px] p-4 gap-3">
               <div ref={chatContainerRef} className="flex-1 overflow-y-auto flex flex-col gap-3 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 {messages.map((msg, i) => (
-                  <div
+                  <motion.div 
                     key={i}
-                    className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+                    variants={messageVariants}
+                    initial="hidden"
+                    animate="visible"
+                    transition={{ delay: i * 0.1 }}
                   >
-                    <div
-                      className={`max-w-[75%] px-4 py-2 rounded-lg text-base whitespace-pre-line ${
-                        msg.sender === "user"
-                          ? "bg-[#3D5DE8] text-white rounded-br-none"
-                          : "bg-gray-100 text-gray-900 rounded-bl-none"
-                      }`}
-                    >
-                      {msg.text}
+                    <div className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                      <motion.div
+                        className={`max-w-[75%] px-4 py-3 rounded-xl text-base whitespace-pre-line shadow-sm ${
+                          msg.role === "user"
+                            ? "bg-[#3D5DE8] text-white rounded-br-sm"
+                            : "bg-gray-100 text-gray-900 rounded-bl-sm border border-gray-200"
+                        }`}
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ type: "spring", stiffness: 300 }}
+                      >
+                        {msg.content}
+                      </motion.div>
                     </div>
-                  </div>
+                    
+                    {/* Show suggestions after assistant messages */}
+                    {msg.role === "assistant" && i === messages.length - 1 && chatSuggestions.length > 0 && (
+                      <motion.div 
+                        className="mt-3 flex flex-wrap gap-2"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                      >
+                        {chatSuggestions.map((suggestion, idx) => (
+                          <motion.button
+                            key={idx}
+                            onClick={() => handleSuggestionClick(suggestion)}
+                            className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm rounded-full border border-blue-200 transition-colors shadow-sm"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            {suggestion}
+                          </motion.button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </motion.div>
                 ))}
+                
+                {/* Show initial suggestions after the first assistant message */}
+                {messages.length === 1 && messages[0].role === "assistant" && chatSuggestions.length > 0 && (
+                  <motion.div 
+                    className="mt-3 flex flex-wrap gap-2"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    {chatSuggestions.map((suggestion, idx) => (
+                      <motion.button
+                        key={idx}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm rounded-full border border-blue-200 transition-colors shadow-sm"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: idx * 0.1 + 0.5 }}
+                      >
+                        {suggestion}
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
+                
+                {isLoading && (
+                  <motion.div 
+                    className="flex justify-start"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <div className="bg-gray-100 text-gray-900 rounded-xl rounded-bl-sm px-4 py-3 border border-gray-200">
+                      <div className="flex space-x-1">
+                        <motion.div 
+                          className="w-2 h-2 bg-gray-400 rounded-full"
+                          animate={{ y: [0, -5, 0] }}
+                          transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 0.1 }}
+                        />
+                        <motion.div 
+                          className="w-2 h-2 bg-gray-400 rounded-full"
+                          animate={{ y: [0, -5, 0] }}
+                          transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 0.1, delay: 0.2 }}
+                        />
+                        <motion.div 
+                          className="w-2 h-2 bg-gray-400 rounded-full"
+                          animate={{ y: [0, -5, 0] }}
+                          transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 0.1, delay: 0.4 }}
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
               </div>
               <form
                 className="mt-2 flex gap-2"
@@ -166,48 +464,77 @@ export default function AiAssistantPage() {
                   handleSend();
                 }}
               >
-                <input
-                  className="flex-1 border border-gray-400 rounded-lg px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] focus:border-[#3D5DE8] bg-white text-gray-900 placeholder:text-gray-500"
+                <motion.input
+                  className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] focus:border-[#3D5DE8] bg-white text-gray-900 placeholder:text-gray-500"
                   placeholder="Type your message..."
                   value={input}
                   onChange={e => setInput(e.target.value)}
+                  disabled={isLoading}
+                  whileFocus={{ scale: 1.02 }}
                 />
-                <button
+                <motion.button
                   type="submit"
-                  className="bg-[#3D5DE8] text-white font-normal px-6 py-2 rounded-lg hover:bg-[#274bb6] transition"
+                  className="bg-[#3D5DE8] text-white font-medium px-6 py-3 rounded-xl hover:bg-[#274bb6] transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                  disabled={isLoading || !input.trim()}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   Send
-                </button>
+                </motion.button>
               </form>
             </div>
-          </div>
+          </motion.div>
         </div>
+        
         {/* Anomaly Correlations + Key Findings */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col md:flex-row gap-8 shadow-sm">
-          <div className="flex-1 min-w-[250px]">
-            <div className="font-semibold text-gray-900 mb-2">Anomaly Correlations</div>
+        <motion.div 
+          variants={cardVariants}
+          className="bg-white/80 backdrop-blur-sm border border-white/50 rounded-2xl shadow-xl p-8 flex flex-col xl:flex-row gap-12"
+        >
+          <motion.div 
+            variants={itemVariants}
+            className="flex-1 min-w-[250px]"
+          >
+            <div className="font-semibold text-gray-900 mb-4 text-lg">Anomaly Correlations</div>
             <div className="h-48 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={anomalyCorrelations} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="name" tick={{ fill: '#182363', fontSize: 14 }} axisLine={false} tickLine={false} />
-                  <YAxis domain={[0, 1]} tick={{ fill: '#6b7280', fontSize: 14 }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ borderRadius: 8, borderColor: '#e5e7eb', fontSize: 14 }} />
-                  <Bar dataKey="value" fill="#232e6b" radius={[6, 6, 0, 0]} barSize={80} />
+                  <XAxis dataKey="name" tick={{ fill: '#182363', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fill: '#6b7280', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: 8, borderColor: '#e5e7eb', fontSize: 12 }} 
+                    formatter={(value) => [`${value}%`, 'Correlation']}
+                  />
+                  <Bar dataKey="value" fill="#232e6b" radius={[6, 6, 0, 0]} barSize={60} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </div>
-          <div className="flex-1 min-w-[220px] flex flex-col justify-center">
-            <div className="font-semibold text-gray-700 mb-2">Key Findings:</div>
-            <ul className="list-disc pl-5 text-gray-700 text-base space-y-2">
+          </motion.div>
+          <motion.div 
+            variants={itemVariants}
+            className="flex-1 min-w-[220px] flex flex-col justify-center"
+          >
+            <div className="font-semibold text-gray-700 mb-4 text-lg">Key Findings:</div>
+            <motion.ul 
+              className="list-disc pl-5 text-gray-700 text-base space-y-3"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
               {keyFindings.map((finding, i) => (
-                <li key={i}>{finding}</li>
+                <motion.li 
+                  key={i}
+                  variants={itemVariants}
+                  className="leading-relaxed"
+                >
+                  {finding}
+                </motion.li>
               ))}
-            </ul>
-          </div>
-        </div>
+            </motion.ul>
+          </motion.div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

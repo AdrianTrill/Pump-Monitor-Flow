@@ -1,0 +1,86 @@
+# === FRONTEND (Next.js) ===
+
+# dependencies
+fe/node_modules/
+fe/.pnp
+fe/.pnp.*
+fe/.yarn/*
+!fe/.yarn/patches
+!fe/.yarn/plugins
+!fe/.yarn/releases
+!fe/.yarn/versions
+
+# testing
+fe/coverage/
+
+# next.js
+fe/.next/
+fe/out/
+
+# production
+fe/build/
+
+# misc
+fe/.DS_Store
+fe/*.pem
+
+# debug
+fe/npm-debug.log*
+fe/yarn-debug.log*
+fe/yarn-error.log*
+fe/.pnpm-debug.log*
+
+# env files
+fe/.env*
+
+# vercel
+fe/.vercel/
+
+# typescript
+fe/*.tsbuildinfo
+fe/next-env.d.ts
+
+# === BACKEND (Python/FastAPI) ===
+
+# Byte-compiled / optimized / DLL files
+be/__pycache__/
+be/*.py[cod]
+be/*$py.class
+
+# Virtual environment
+be/venv/
+be/.env/
+
+# Distribution / packaging
+be/build/
+be/dist/
+be/*.egg-info/
+
+# Environment variable files
+be/*.env
+be/.env.development
+
+# === GLOBAL ===
+
+# VSCode settings
+.vscode/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker
+.docker/
+
+# IDE
+*.swp
+*.swo
+*~
+
+# Logs
+*.log

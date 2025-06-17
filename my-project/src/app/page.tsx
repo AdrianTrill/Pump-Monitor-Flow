@@ -136,23 +136,23 @@ const cardWrapperVariants: Variants = {
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <motion.div variants={headerVariants} initial="hidden" animate="visible" className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+      <main className="max-w-[1600px] mx-auto px-6 sm:px-8 lg:px-12 py-10">
+        <motion.div variants={headerVariants} initial="hidden" animate="visible" className="flex flex-col md:flex-row md:items-center md:justify-between mb-10">
           <h1 className="text-4xl font-bold text-slate-800">System Dashboard</h1>
           <div className="flex items-center gap-2 mt-4 md:mt-0">
-            <select className="border-gray-300 rounded-md px-3 py-2 text-sm font-semibold text-gray-800 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] transition-all">
+            <select className="border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] transition-all">
               <option>All Locations</option>
             </select>
-            <select className="border-gray-300 rounded-md px-3 py-2 text-sm font-semibold text-gray-800 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] transition-all">
+            <select className="border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] transition-all">
               <option>All Types</option>
             </select>
-            <select className="border-gray-300 rounded-md px-3 py-2 text-sm font-semibold text-gray-800 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] transition-all">
+            <select className="border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] transition-all">
               <option>All Severities</option>
             </select>
           </div>
         </motion.div>
 
-        <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10" variants={containerVariants} initial="hidden" animate="visible">
+        <motion.div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8 mb-12" variants={containerVariants} initial="hidden" animate="visible">
           {stats.map((stat, i) => (
             <motion.div key={i} variants={itemVariants} whileHover={{ scale: 1.05, transition: { type: 'spring', stiffness: 300 } }}>
               <StatCard {...stat} />
@@ -160,9 +160,9 @@ export default function Home() {
           ))}
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }} className="bg-white/70 backdrop-blur-sm rounded-2xl p-7 mb-10 shadow-xl">
-          <h2 className="text-xl font-semibold mb-5 text-slate-800">Pump Status Overview</h2>
-          <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" variants={containerVariants} initial="hidden" animate="visible">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }} className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 mb-12 shadow-xl">
+          <h2 className="text-xl font-semibold mb-6 text-slate-800">Pump Status Overview</h2>
+          <motion.div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8" variants={containerVariants} initial="hidden" animate="visible">
             {pumps.map((pump, i) => (
               <motion.div key={i} variants={itemVariants} className="h-full">
                   <motion.a 
@@ -181,8 +181,8 @@ export default function Home() {
           </motion.div>
         </motion.div>
 
-        <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-7 shadow-xl">
-          <h2 className="text-xl font-semibold mb-5 text-slate-800">System Health (24h)</h2>
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-xl">
+          <h2 className="text-xl font-semibold mb-6 text-slate-800">System Health (24h)</h2>
           <SystemHealthChart />
         </div>
       </main>

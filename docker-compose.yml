@@ -1,0 +1,47 @@
+services:
+  backend:
+    build:
+      context: ./be
+      dockerfile: Dockerfile
+    ports:
+      - "8024:8000"
+    environment:
+      - APP_ENV=development
+      - API_V1_STR=/api/v1
+      - PROJECT_NAME=Pump Monitor API
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=gpt-4.1
+      - BACKEND_CORS_ORIGINS=["https://pump-monitor.ccrolabs.com/api/v1", "http://localhost:3024"]
+      - SECRET_KEY=${SECRET_KEY}
+    restart: unless-stopped
+    container_name: pump-monitor-backend
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./fe
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=https://pump-monitor-be.ccrolabs.com/api/v1
+    ports:
+      - "3024:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://pump-monitor-be.ccrolabs.com/api/v1
+    restart: unless-stopped
+    container_name: pump-monitor-frontend
+    networks:
+      - app-network
+    depends_on:
+      backend:
+        condition: service_healthy
+
+networks:
+  app-network:
+    driver: bridge
