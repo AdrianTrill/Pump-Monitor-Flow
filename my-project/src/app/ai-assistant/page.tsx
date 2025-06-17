@@ -32,25 +32,25 @@ const suggestions = [
   {
     title: "Schedule inspection for Pump A23",
     desc: "Bearing wear detected with 85% confidence",
-    color: "bg-[#f3f1fd] border-[#d6d0f7]",
-    button: { label: "Schedule Now", color: "bg-[#6c63ff] text-white hover:bg-[#554fd8]" },
+    color: "bg-[#fef2f2] border-[#fca5a5]",
+    button: { label: "Schedule Now", color: "bg-[#3D5DE8] text-white hover:bg-[#274bb6]" },
   },
   {
     title: "Review lubrication schedule",
     desc: "Multiple pumps showing increased friction",
-    color: "bg-[#fffbe7] border-[#f7e7a3]",
-    button: { label: "View Details", color: "bg-[#ffe066] text-[#182363] hover:bg-[#ffd633]" },
+    color: "bg-[#fefce8] border-[#fde047]",
+    button: { label: "View Details", color: "bg-[#3D5DE8] text-white hover:bg-[#274bb6]" },
   },
   {
     title: "Temperature monitoring alert",
     desc: "Unit C pumps running above normal range",
-    color: "bg-[#ffeaea] border-[#f7bdbd]",
-    button: { label: "Investigate", color: "bg-[#ff6b6b] text-white hover:bg-[#d94343]" },
+    color: "bg-[#fef2f2] border-[#fca5a5]",
+    button: { label: "Investigate", color: "bg-[#3D5DE8] text-white hover:bg-[#274bb6]" },
   },
   {
     title: "Preventive maintenance due",
     desc: "5 pumps approaching maintenance interval",
-    color: "bg-[#eaf4ff] border-[#b3d8fd]",
+    color: "bg-[#dbeafe] border-[#93c5fd]",
     button: { label: "Plan Maintenance", color: "bg-[#3D5DE8] text-white hover:bg-[#274bb6]" },
   },
 ];
@@ -72,10 +72,12 @@ export default function AiAssistantPage() {
   const [messages, setMessages] = useState(mockMessages);
   const [input, setInput] = useState("");
   const [search, setSearch] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   function handleSend() {
@@ -93,12 +95,12 @@ export default function AiAssistantPage() {
 
   return (
     <div className="min-h-screen bg-[#f7f8fa] flex flex-col">
-      <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col pt-8 pb-8 px-4">
+      <div className="w-full flex-1 flex flex-col pt-8 pb-8 px-8">
         {/* Page Title */}
-        <h1 className="text-3xl md:text-4xl font-bold text-[#182363] text-center mb-6">AI Assistant</h1>
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 text-center mb-6">AI Assistant</h1>
         {/* Large Search Bar */}
         <div className="flex justify-center mb-8">
-          <div className="relative w-full max-w-2xl">
+          <div className="relative w-full max-w-4xl">
             <input
               className="w-full border border-gray-300 rounded-lg pl-12 pr-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] bg-white shadow-sm text-gray-900 placeholder:text-gray-400"
               placeholder="Ask me anything about your pumps... (e.g., 'Show pumps with overheating risk')"
@@ -109,10 +111,10 @@ export default function AiAssistantPage() {
           </div>
         </div>
         {/* Main Content: Suggestions + Chat */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          {/* AI Suggestions */}
-          <div>
-            <div className="font-semibold text-[#182363] text-lg mb-4">AI Suggestions</div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* AI Suggestions Card */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <div className="font-semibold text-gray-900 text-lg mb-4">AI Suggestions</div>
             <div className="flex flex-col gap-4">
               {suggestions.map((s, i) => (
                 <div
@@ -120,11 +122,11 @@ export default function AiAssistantPage() {
                   className={`border ${s.color} rounded-xl px-6 py-4 flex items-center justify-between min-h-[92px] shadow-sm`}
                 >
                   <div>
-                    <div className="font-semibold text-[#182363] text-base mb-1">{s.title}</div>
+                    <div className="font-semibold text-gray-900 text-base mb-1">{s.title}</div>
                     <div className="text-gray-700 text-sm">{s.desc}</div>
                   </div>
                   <button
-                    className={`px-4 py-2 rounded-lg font-semibold text-sm transition ${s.button.color}`}
+                    className={`px-4 py-2 rounded-lg font-normal text-sm transition ${s.button.color}`}
                   >
                     {s.button.label}
                   </button>
@@ -132,11 +134,14 @@ export default function AiAssistantPage() {
               ))}
             </div>
           </div>
-          {/* AI Chat */}
-          <div>
-            <div className="font-semibold text-[#182363] text-lg mb-4">AI Chat</div>
-            <div className="flex flex-col h-[420px] bg-white rounded-xl border border-gray-200 p-4 gap-3 shadow-sm">
-              <div className="flex-1 overflow-y-auto flex flex-col gap-3 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+          
+          {/* AI Chat Card */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="p-6 border-b border-gray-200">
+              <div className="font-semibold text-gray-900 text-lg">AI Chat</div>
+            </div>
+            <div className="flex flex-col h-[420px] p-4 gap-3">
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto flex flex-col gap-3 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 {messages.map((msg, i) => (
                   <div
                     key={i}
@@ -153,7 +158,6 @@ export default function AiAssistantPage() {
                     </div>
                   </div>
                 ))}
-                <div ref={messagesEndRef} />
               </div>
               <form
                 className="mt-2 flex gap-2"
@@ -170,7 +174,7 @@ export default function AiAssistantPage() {
                 />
                 <button
                   type="submit"
-                  className="bg-[#3D5DE8] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#274bb6] transition"
+                  className="bg-[#3D5DE8] text-white font-normal px-6 py-2 rounded-lg hover:bg-[#274bb6] transition"
                 >
                   Send
                 </button>
@@ -181,7 +185,7 @@ export default function AiAssistantPage() {
         {/* Anomaly Correlations + Key Findings */}
         <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col md:flex-row gap-8 shadow-sm">
           <div className="flex-1 min-w-[250px]">
-            <div className="font-semibold text-[#182363] mb-2">Anomaly Correlations</div>
+            <div className="font-semibold text-gray-900 mb-2">Anomaly Correlations</div>
             <div className="h-48 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={anomalyCorrelations} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -189,13 +193,13 @@ export default function AiAssistantPage() {
                   <XAxis dataKey="name" tick={{ fill: '#182363', fontSize: 14 }} axisLine={false} tickLine={false} />
                   <YAxis domain={[0, 1]} tick={{ fill: '#6b7280', fontSize: 14 }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={{ borderRadius: 8, borderColor: '#e5e7eb', fontSize: 14 }} />
-                  <Bar dataKey="value" fill="#232e6b" radius={[6, 6, 0, 0]} barSize={40} />
+                  <Bar dataKey="value" fill="#232e6b" radius={[6, 6, 0, 0]} barSize={80} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
           <div className="flex-1 min-w-[220px] flex flex-col justify-center">
-            <div className="font-semibold text-[#182363] mb-2">Key Findings:</div>
+            <div className="font-semibold text-gray-700 mb-2">Key Findings:</div>
             <ul className="list-disc pl-5 text-gray-700 text-base space-y-2">
               {keyFindings.map((finding, i) => (
                 <li key={i}>{finding}</li>
@@ -206,4 +210,4 @@ export default function AiAssistantPage() {
       </div>
     </div>
   );
-} 
+}

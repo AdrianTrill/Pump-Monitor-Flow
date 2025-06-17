@@ -19,7 +19,6 @@ const stats = [
     description: "Active units",
     border: "border-[#bfdbfe]",
     bg: "bg-[#eff6ff]",
-    text: "text-[#182363]",
   },
   {
     label: "Critical Alerts",
@@ -27,7 +26,6 @@ const stats = [
     description: "Require immediate attention",
     border: "border-[#fca5a5]",
     bg: "bg-[#fef2f2]",
-    text: "text-[#b20000]",
   },
   {
     label: "Predicted Failures",
@@ -35,7 +33,6 @@ const stats = [
     description: "Next 30 days",
     border: "border-[#fde047]",
     bg: "bg-[#fefce8]",
-    text: "text-[#bfa100]",
   },
   {
     label: "System Health",
@@ -43,7 +40,6 @@ const stats = [
     description: "Overall performance",
     border: "border-[#86efac]",
     bg: "bg-[#f0fdf4]",
-    text: "text-[#1c8f45]",
   },
 ];
 
@@ -58,7 +54,6 @@ const pumps = [
     border: "border-[#86efac]",
     bg: "bg-[#f0fdf4]",
     dot: "bg-[#1c8f45]",
-    text: "text-[#1c8f45]",
   },
   {
     name: "Booster Pump B3",
@@ -70,7 +65,6 @@ const pumps = [
     border: "border-[#fde047]",
     bg: "bg-[#fefce8]",
     dot: "bg-[#fde047]",
-    text: "text-[#bfa100]",
   },
   {
     name: "Transfer Pump C2",
@@ -82,7 +76,6 @@ const pumps = [
     border: "border-[#fca5a5]",
     bg: "bg-[#fef2f2]",
     dot: "bg-[#b20000]",
-    text: "text-[#b20000]",
   },
   {
     name: "Circulation Pump A2",
@@ -94,7 +87,6 @@ const pumps = [
     border: "border-[#86efac]",
     bg: "bg-[#f0fdf4]",
     dot: "bg-[#1c8f45]",
-    text: "text-[#1c8f45]",
   },
   {
     name: "Main Feed Pump",
@@ -106,7 +98,6 @@ const pumps = [
     border: "border-[#fde047]",
     bg: "bg-[#fefce8]",
     dot: "bg-[#fde047]",
-    text: "text-[#bfa100]",
   },
   {
     name: "Service Pump D1",
@@ -118,7 +109,6 @@ const pumps = [
     border: "border-[#86efac]",
     bg: "bg-[#f0fdf4]",
     dot: "bg-[#1c8f45]",
-    text: "text-[#1c8f45]",
   },
 ];
 
@@ -137,8 +127,8 @@ function StatCard({ stat }: any) {
     <div
       className={`border ${stat.border} ${stat.bg} rounded-lg px-6 py-4 flex flex-col gap-1 shadow-sm min-w-[200px]`}
     >
-      <div className={`text-2xl font-bold ${stat.text}`}>{stat.value}</div>
-      <div className="font-semibold text-gray-900">{stat.label}</div>
+      <div className={`text-2xl font-bold text-gray-900`}>{stat.value}</div>
+      <div className="font-semibold text-gray-700">{stat.label}</div>
       <div className="text-xs text-gray-500">{stat.description}</div>
     </div>
   );
@@ -150,7 +140,7 @@ function PumpCard({ pump }: any) {
       className={`border-3 ${pump.border} ${pump.bg} rounded-lg px-5 py-4 flex flex-col gap-2 shadow min-w-[260px] relative`}
     >
       <div className="flex items-center justify-between">
-        <div className={`font-semibold ${pump.text}`}>{pump.name}</div>
+        <div className={`font-semibold text-gray-900`}>{pump.name}</div>
         <span className={`w-3 h-3 rounded-full ${pump.dot}`}></span>
       </div>
       <div className="text-xs text-gray-700">
@@ -169,18 +159,18 @@ function PumpCard({ pump }: any) {
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#f7f8fa]">
-      <main className="max-w-7xl mx-auto px-8 py-8">
+      <main className="w-full px-8 py-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-7">
-          <h1 className="text-3xl font-bold text-[#182363] mb-4 md:mb-0">System Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4 md:mb-0">System Dashboard</h1>
           <div className="flex gap-3 justify-end">
-            <select className="border border-gray-400 rounded px-3 py-2 text-base font-semibold text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] placeholder-gray-500">
-              <option className="text-gray-800 font-semibold">All Locations</option>
+            <select className="border border-gray-400 rounded px-3 py-2 text-base text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] placeholder-gray-500">
+              <option className="text-gray-800">All Locations</option>
             </select>
-            <select className="border border-gray-400 rounded px-3 py-2 text-base font-semibold text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] placeholder-gray-500">
-              <option className="text-gray-800 font-semibold">All Types</option>
+            <select className="border border-gray-400 rounded px-3 py-2 text-base text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] placeholder-gray-500">
+              <option className="text-gray-800">All Types</option>
             </select>
-            <select className="border border-gray-400 rounded px-3 py-2 text-base font-semibold text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] placeholder-gray-500">
-              <option className="text-gray-800 font-semibold">All Severities</option>
+            <select className="border border-gray-400 rounded px-3 py-2 text-base text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] placeholder-gray-500">
+              <option className="text-gray-800">All Severities</option>
             </select>
           </div>
         </div>
@@ -192,7 +182,7 @@ export default function Home() {
         </div>
         {/* Pump Status Overview */}
         <div className="bg-white rounded-lg p-7 mb-10 shadow">
-          <h2 className="text-lg font-semibold mb-5 text-[#182363]">Pump Status Overview</h2>
+          <h2 className="text-lg font-semibold mb-5 text-gray-900">Pump Status Overview</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {pumps.map((pump, i) => (
               <PumpCard pump={pump} key={i} />
@@ -201,7 +191,7 @@ export default function Home() {
         </div>
         {/* System Health Graph */}
         <div className="bg-white rounded-lg p-7 shadow">
-          <h2 className="text-lg font-semibold mb-5 text-[#182363]">System Health (24h)</h2>
+          <h2 className="text-lg font-semibold mb-5 text-gray-900">System Health (24h)</h2>
           <SystemHealthChart />
         </div>
       </main>

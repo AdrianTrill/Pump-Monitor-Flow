@@ -12,52 +12,87 @@ const pumps = [
 ];
 
 const statusStyles = {
-  Normal: "border border-[#1c8f45] bg-[#d3ecd3] text-[#1c8f45]",
-  Warning: "border border-[#bf7600] bg-[#fff6b4] text-[#bf7600]",
-  Critical: "border border-[#b20000] bg-[#ffd3d3] text-[#b20000]",
+  Normal: "border border-[#1c8f45] bg-[#d3ecd3] text-gray-900",
+  Warning: "border border-[#bf7600] bg-[#fff6b4] text-gray-900",
+  Critical: "border border-[#b20000] bg-[#ffd3d3] text-gray-900",
 };
 
 export default function PumpsPage() {
   return (
     <div className="min-h-screen bg-[#f7f8fa]">
-      <div className="max-w-7xl mx-auto px-8 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-[#182363]">Pumps</h1>
-        <div className="bg-white rounded-xl shadow p-6">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="text-left text-gray-500 font-semibold text-xs">
-                <th className="px-4 py-3">PUMP NAME</th>
-                <th className="px-4 py-3">ID</th>
-                <th className="px-4 py-3">LOCATION</th>
-                <th className="px-4 py-3">TYPE</th>
-                <th className="px-4 py-3">PRESSURE (PSI)</th>
-                <th className="px-4 py-3">TEMPERATURE (°F)</th>
-                <th className="px-4 py-3">STATUS</th>
-                <th className="px-4 py-3">ACTION</th>
+      <div className="w-full px-8 py-8">
+        <h1 className="text-3xl font-bold mb-8 text-gray-900">Pumps</h1>
+        <div className="bg-white rounded-xl shadow overflow-hidden">
+          <table className="min-w-full">
+            <thead className="bg-[#f8f9fa] border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  PUMP NAME
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  ID
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  LOCATION
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  TYPE
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  PRESSURE (PSI)
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  TEMPERATURE (°F)
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  STATUS
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  ACTION
+                </th>
               </tr>
             </thead>
-            <tbody className="text-gray-900 text-base">
+            <tbody className="bg-white divide-y divide-gray-200">
               {pumps.map((pump, i) => (
-                <tr key={i} className="border-t last:border-b hover:bg-gray-50 transition">
-                  <td className="px-4 py-3 font-medium">{pump.name}</td>
-                  <td className="px-4 py-3">{pump.id}</td>
-                  <td className="px-4 py-3">{pump.location}</td>
-                  <td className="px-4 py-3">{pump.type}</td>
-                  <td className="px-4 py-3">{pump.pressure}</td>
-                  <td className="px-4 py-3">{pump.temp}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block rounded-full px-4 py-1 text-sm font-semibold ${statusStyles[pump.status as keyof typeof statusStyles]}`}>{pump.status}</span>
+                <tr key={i} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                    {pump.name}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    {pump.id}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    {pump.location}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    {pump.type}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    {pump.pressure}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    {pump.temp}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${statusStyles[pump.status as keyof typeof statusStyles]}`}>
+                      {pump.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     {(() => {
-                      const btnClass = "w-[104px] flex items-center justify-center gap-2 border border-gray-300 rounded px-3 py-1.5 hover:bg-gray-100 transition";
-                      const btnContent = <><EyeIcon className="w-5 h-5 text-gray-700" /><span className="font-medium text-gray-700">View</span></>;
+                      const btnClass = "inline-flex items-center gap-2 px-4 py-2 border font-semibold border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors";
+                      const btnContent = (
+                        <>
+                          <EyeIcon className="w-4 h-4" />
+                          View
+                        </>
+                      );
                       return i === 0 ? (
                         <Link href={`/pumps/${pump.id}`} className={btnClass}>
                           {btnContent}
                         </Link>
                       ) : (
-                        <button type="button" className={btnClass + " cursor-pointer"}>
+                        <button type="button" className={btnClass}>
                           {btnContent}
                         </button>
                       );
@@ -71,4 +106,4 @@ export default function PumpsPage() {
       </div>
     </div>
   );
-} 
+}

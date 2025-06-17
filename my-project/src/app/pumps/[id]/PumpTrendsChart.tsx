@@ -19,8 +19,8 @@ export default function PumpTrendsChart({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
-        <div className="text-xs text-gray-700 mb-1">Vibration (mm/s)</div>
-        <div className="h-32 w-full">
+        <div className="text-xs text-gray-700 mb-1 font-bold">Vibration (mm/s)</div>
+        <div className="h-32 w-full font-semibold">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={vibrationData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -33,8 +33,8 @@ export default function PumpTrendsChart({
         </div>
       </div>
       <div>
-        <div className="text-xs text-gray-700 mb-1">Temperature (°F)</div>
-        <div className="h-32 w-full">
+        <div className="text-xs text-gray-700 mb-1 font-bold">Temperature (°F)</div>
+        <div className="h-32 w-full font-semibold">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={tempData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
