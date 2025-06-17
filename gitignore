@@ -41,19 +41,19 @@ yarn-error.log*
 next-env.d.ts
 
 
-# Allow tracking files in my-project
-!my-project/
-!my-project/package.json
-!my-project/tsconfig.json
-!my-project/tsconfig.*.json
-!my-project/public/
-!my-project/src/
-!my-project/src/**
-!my-project/tailwind.config.js
+# Allow tracking files in fe
+!fe/
+!fe/package.json
+!fe/tsconfig.json
+!fe/tsconfig.*.json
+!fe/public/
+!fe/src/
+!fe/src/**
+!fe/tailwind.config.js
 
-# Still ignore build output and dependencies in my-project
-my-project/node_modules/
-my-project/.next/
-my-project/out/
-my-project/.env*
-my-project/.vercel/
+# Still ignore build output and dependencies in fe
+fe/node_modules/
+fe/.next/
+fe/out/
+fe/.env*
+fe/.vercel/
