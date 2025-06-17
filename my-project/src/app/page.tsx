@@ -1,207 +1,188 @@
+"use client";
+
 import React from "react";
-import { MagnifyingGlassIcon, FunnelIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { motion, Variants } from "framer-motion";
+import AnimatedCounter from "./components/AnimatedCounter";
 import SystemHealthChart from "./components/SystemHealthChart";
-import Link from "next/link";
 
+// --- SVG Icons for PumpCard ---
+const ThermometerIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
+        <path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z" />
+    </svg>
+);
+
+const GaugeIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
+        <path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>
+    </svg>
+);
+
+
+// --- Main Page Data ---
 const stats = [
-  {
-    label: "Total Pumps",
-    value: 127,
-    description: "Active units",
-    border: "border-[#bfdbfe]",
-    bg: "bg-[#eff6ff]",
-    text: "text-[#182363]",
-  },
-  {
-    label: "Critical Alerts",
-    value: 3,
-    description: "Require immediate attention",
-    border: "border-[#fca5a5]",
-    bg: "bg-[#fef2f2]",
-    text: "text-[#b20000]",
-  },
-  {
-    label: "Predicted Failures",
-    value: 8,
-    description: "Next 30 days",
-    border: "border-[#fde047]",
-    bg: "bg-[#fefce8]",
-    text: "text-[#bfa100]",
-  },
-  {
-    label: "System Health",
-    value: "94%",
-    description: "Overall performance",
-    border: "border-[#86efac]",
-    bg: "bg-[#f0fdf4]",
-    text: "text-[#1c8f45]",
-  },
+  { label: "Total Pumps", value: 127, description: "Active units", border: "border-blue-200", bg: "bg-blue-50", text: "text-blue-800" },
+  { label: "Critical Alerts", value: 3, description: "Require immediate attention", border: "border-red-300", bg: "bg-red-50", text: "text-red-600" },
+  { label: "Predicted Failures", value: 8, description: "Next 30 days", border: "border-yellow-300", bg: "bg-yellow-50", text: "text-yellow-600" },
+  { label: "System Health", value: "94%", description: "Overall performance", border: "border-green-300", bg: "bg-green-50", text: "text-green-600" },
 ];
 
-const pumps = [
-  {
-    name: "Feed Pump A1",
-    id: "P001",
-    location: "Unit A",
-    type: "Centrifugal",
-    pressure: "45.2 psi",
-    temp: "78°F",
-    border: "border-[#86efac]",
-    bg: "bg-[#f0fdf4]",
-    dot: "bg-[#1c8f45]",
-    text: "text-[#1c8f45]",
-  },
-  {
-    name: "Booster Pump B3",
-    id: "P002",
-    location: "Unit B",
-    type: "Centrifugal",
-    pressure: "52.1 psi",
-    temp: "92°F",
-    border: "border-[#fde047]",
-    bg: "bg-[#fefce8]",
-    dot: "bg-[#fde047]",
-    text: "text-[#bfa100]",
-  },
-  {
-    name: "Transfer Pump C2",
-    id: "P003",
-    location: "Unit C",
-    type: "Reciprocating",
-    pressure: "38.7 psi",
-    temp: "105°F",
-    border: "border-[#fca5a5]",
-    bg: "bg-[#fef2f2]",
-    dot: "bg-[#b20000]",
-    text: "text-[#b20000]",
-  },
-  {
-    name: "Circulation Pump A2",
-    id: "P004",
-    location: "Unit A",
-    type: "Rotary",
-    pressure: "41.3 psi",
-    temp: "82°F",
-    border: "border-[#86efac]",
-    bg: "bg-[#f0fdf4]",
-    dot: "bg-[#1c8f45]",
-    text: "text-[#1c8f45]",
-  },
-  {
-    name: "Main Feed Pump",
-    id: "P005",
-    location: "Unit B",
-    type: "Centrifugal",
-    pressure: "48.9 psi",
-    temp: "88°F",
-    border: "border-[#fde047]",
-    bg: "bg-[#fefce8]",
-    dot: "bg-[#fde047]",
-    text: "text-[#bfa100]",
-  },
-  {
-    name: "Service Pump D1",
-    id: "P006",
-    location: "Unit C",
-    type: "Rotary",
-    pressure: "44.6 psi",
-    temp: "76°F",
-    border: "border-[#86efac]",
-    bg: "bg-[#f0fdf4]",
-    dot: "bg-[#1c8f45]",
-    text: "text-[#1c8f45]",
-  },
+const pumps: PumpCardProps[] = [
+    { name: "Feed Pump A1", id: "P001", location: "Unit A", type: "Centrifugal", pressure: "45.2 psi", temp: "78°F", status: 'ok' },
+    { name: "Booster Pump B3", id: "P002", location: "Unit B", type: "Centrifugal", pressure: "52.1 psi", temp: "92°F", status: 'warning' },
+    { name: "Transfer Pump C2", id: "P003", location: "Unit C", type: "Reciprocating", pressure: "38.7 psi", temp: "105°F", status: 'critical' },
+    { name: "Circulation Pump A2", id: "P004", location: "Unit A", type: "Rotary", pressure: "41.3 psi", temp: "82°F", status: 'ok' },
+    { name: "Main Feed Pump", id: "P005", location: "Unit B", type: "Centrifugal", pressure: "48.9 psi", temp: "88°F", status: 'warning' },
+    { name: "Service Pump D1", id: "P006", location: "Unit C", type: "Rotary", pressure: "44.6 psi", temp: "76°F", status: 'ok' },
 ];
 
-const healthData = [
-  { time: "00:00", value: 94 },
-  { time: "04:00", value: 93 },
-  { time: "08:00", value: 96 },
-  { time: "12:00", value: 94 },
-  { time: "16:00", value: 95 },
-  { time: "20:00", value: 96 },
-  { time: "24:00", value: 95 },
-];
+type StatCardProps = (typeof stats)[0];
+type PumpCardProps = {
+    name: string;
+    id: string;
+    location: string;
+    type: string;
+    pressure: string;
+    temp: string;
+    status: 'ok' | 'warning' | 'critical';
+};
 
-function StatCard({ stat }: any) {
+
+// --- Reusable Card Components ---
+function StatCard({ label, value, description, border, bg, text }: StatCardProps) {
+  const isPercentage = typeof value === 'string' && value.includes('%');
+  const numericValue = isPercentage ? parseFloat(value) : (value as number);
+
   return (
-    <div
-      className={`border ${stat.border} ${stat.bg} rounded-lg px-6 py-4 flex flex-col gap-1 shadow-sm min-w-[200px]`}
-    >
-      <div className={`text-2xl font-bold ${stat.text}`}>{stat.value}</div>
-      <div className="font-semibold text-gray-900">{stat.label}</div>
-      <div className="text-xs text-gray-500">{stat.description}</div>
+    <div className={`border ${border} ${bg} rounded-xl px-6 py-4 flex flex-col gap-1 shadow-md min-w-[200px]`}>
+      <div className={`text-3xl font-bold ${text}`}>
+        {isPercentage ? <><AnimatedCounter to={numericValue} />%</> : <AnimatedCounter to={numericValue} />}
+      </div>
+      <div className="font-semibold text-gray-900">{label}</div>
+      <div className="text-sm text-gray-500">{description}</div>
     </div>
   );
 }
 
-function PumpCard({ pump }: any) {
+// Enhanced PumpCard with colored background and subtle shine animation
+function PumpCard({ name, id, location, type, pressure, temp, status }: PumpCardProps) {
+  const statusStyles = {
+    ok: { text: "text-green-800", dot: "bg-green-500", border: "border-green-300", bg: "bg-green-50" },
+    warning: { text: "text-yellow-800", dot: "bg-yellow-500", border: "border-yellow-300", bg: "bg-yellow-50" },
+    critical: { text: "text-red-800", dot: "bg-red-500", border: "border-red-300", bg: "bg-red-50" },
+  };
+  const currentStatus = statusStyles[status];
+
+  const shineVariants: Variants = {
+    rest: { x: "-110%", skewX: '-25deg' },
+    hover: { x: "110%", transition: { duration: 0.7, ease: [0.4, 0.0, 0.2, 1] } }
+  };
+
   return (
-    <div
-      className={`border-3 ${pump.border} ${pump.bg} rounded-lg px-5 py-4 flex flex-col gap-2 shadow min-w-[260px] relative`}
-    >
-      <div className="flex items-center justify-between">
-        <div className={`font-semibold ${pump.text}`}>{pump.name}</div>
-        <span className={`w-3 h-3 rounded-full ${pump.dot}`}></span>
+    <div className={`border ${currentStatus.border} ${currentStatus.bg} rounded-xl p-4 h-full flex flex-col gap-3 relative overflow-hidden shadow-lg`}>
+      <motion.div
+        className="absolute top-0 left-0 w-3/4 h-full opacity-0 group-hover:opacity-100"
+        style={{ background: "linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%)" }}
+        variants={shineVariants}
+      />
+      
+      <div className="relative z-10 flex items-center justify-between">
+        <div className={`font-semibold ${currentStatus.text}`}>{name}</div>
+        <span className={`w-3 h-3 rounded-full ${currentStatus.dot} relative flex items-center justify-center`}>
+          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${currentStatus.dot} opacity-75`}></span>
+        </span>
       </div>
-      <div className="text-xs text-gray-700">
-        ID: {pump.id} <br />
-        Location: {pump.location} <br />
-        Type: {pump.type}
+      <div className="relative z-10 text-xs text-gray-500 border-t border-gray-200/80 pt-2">
+          ID: <span className="font-medium text-slate-600">{id}</span><br />
+          Location: <span className="font-medium text-slate-600">{location}</span><br />
+          Type: <span className="font-medium text-slate-600">{type}</span>
       </div>
-      <div className="flex justify-between text-sm font-semibold mt-2 text-gray-700">
-        <span>Pressure: {pump.pressure}</span>
-        <span>Temp: {pump.temp}</span>
+      <div className="relative z-10 flex justify-between text-sm font-semibold mt-auto text-gray-800">
+          <div className="flex items-center gap-2">
+              <GaugeIcon />
+              <span className="text-slate-700">{pressure}</span>
+          </div>
+          <div className="flex items-center gap-2">
+              <ThermometerIcon />
+              <span className="text-slate-700">{temp}</span>
+          </div>
       </div>
     </div>
   );
 }
 
+// --- Framer Motion Variants ---
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } },
+};
+
+const itemVariants: Variants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100 } },
+};
+
+const headerVariants: Variants = {
+  hidden: { y: -30, opacity: 0 },
+  visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } },
+};
+
+const cardWrapperVariants: Variants = {
+  rest: { y: 0, scale: 1 },
+  hover: { y: -8, scale: 1.03 }
+};
+
+// --- Main Exported Component ---
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#f7f8fa]">
-      <main className="max-w-7xl mx-auto px-8 py-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-7">
-          <h1 className="text-3xl font-bold text-[#182363] mb-4 md:mb-0">System Dashboard</h1>
-          <div className="flex gap-3 justify-end">
-            <select className="border border-gray-400 rounded px-3 py-2 text-base font-semibold text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] placeholder-gray-500">
-              <option className="text-gray-800 font-semibold">All Locations</option>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <motion.div variants={headerVariants} initial="hidden" animate="visible" className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+          <h1 className="text-4xl font-bold text-slate-800">System Dashboard</h1>
+          <div className="flex items-center gap-2 mt-4 md:mt-0">
+            <select className="border-gray-300 rounded-md px-3 py-2 text-sm font-semibold text-gray-800 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] transition-all">
+              <option>All Locations</option>
             </select>
-            <select className="border border-gray-400 rounded px-3 py-2 text-base font-semibold text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] placeholder-gray-500">
-              <option className="text-gray-800 font-semibold">All Types</option>
+            <select className="border-gray-300 rounded-md px-3 py-2 text-sm font-semibold text-gray-800 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] transition-all">
+              <option>All Types</option>
             </select>
-            <select className="border border-gray-400 rounded px-3 py-2 text-base font-semibold text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] placeholder-gray-500">
-              <option className="text-gray-800 font-semibold">All Severities</option>
+            <select className="border-gray-300 rounded-md px-3 py-2 text-sm font-semibold text-gray-800 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] transition-all">
+              <option>All Severities</option>
             </select>
           </div>
-        </div>
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        </motion.div>
+
+        <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10" variants={containerVariants} initial="hidden" animate="visible">
           {stats.map((stat, i) => (
-            <StatCard stat={stat} key={i} />
+            <motion.div key={i} variants={itemVariants} whileHover={{ scale: 1.05, transition: { type: 'spring', stiffness: 300 } }}>
+              <StatCard {...stat} />
+            </motion.div>
           ))}
-        </div>
-        {/* Pump Status Overview */}
-        <div className="bg-white rounded-lg p-7 mb-10 shadow">
-          <h2 className="text-lg font-semibold mb-5 text-[#182363]">Pump Status Overview</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }} className="bg-white/70 backdrop-blur-sm rounded-2xl p-7 mb-10 shadow-xl">
+          <h2 className="text-xl font-semibold mb-5 text-slate-800">Pump Status Overview</h2>
+          <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" variants={containerVariants} initial="hidden" animate="visible">
             {pumps.map((pump, i) => (
-              <PumpCard pump={pump} key={i} />
+              <motion.div key={i} variants={itemVariants} className="h-full">
+                  <motion.a 
+                    href="#" 
+                    className="cursor-pointer block h-full group" 
+                    variants={cardWrapperVariants}
+                    initial="rest"
+                    whileHover="hover"
+                    whileTap={{ y: 0, scale: 0.99 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  >
+                    <PumpCard {...pump} />
+                  </motion.a>
+              </motion.div>
             ))}
-          </div>
-        </div>
-        {/* System Health Graph */}
-        <div className="bg-white rounded-lg p-7 shadow">
-          <h2 className="text-lg font-semibold mb-5 text-[#182363]">System Health (24h)</h2>
+          </motion.div>
+        </motion.div>
+
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-7 shadow-xl">
+          <h2 className="text-xl font-semibold mb-5 text-slate-800">System Health (24h)</h2>
           <SystemHealthChart />
         </div>
       </main>
