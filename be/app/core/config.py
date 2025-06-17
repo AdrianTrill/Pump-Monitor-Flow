@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     
     class Config:
-        env_file = ".env.development"
+        env_file = ".env.local"
         case_sensitive = True
 
 

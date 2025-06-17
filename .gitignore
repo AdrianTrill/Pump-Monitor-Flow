@@ -31,7 +31,10 @@ fe/yarn-error.log*
 fe/.pnpm-debug.log*
 
 # env files
-fe/.env*
+fe/*.env
+fe/.env.local
+fe/.env.development
+fe/.env.production
 
 # vercel
 fe/.vercel/
@@ -43,9 +46,9 @@ fe/next-env.d.ts
 # === BACKEND (Python/FastAPI) ===
 
 # Byte-compiled / optimized / DLL files
-be/__pycache__/
-be/*.py[cod]
-be/*$py.class
+be/**/__pycache__/
+be/**/*.py[cod]
+be/**/*$py.class
 
 # Virtual environment
 be/venv/
@@ -54,11 +57,13 @@ be/.env/
 # Distribution / packaging
 be/build/
 be/dist/
-be/*.egg-info/
+be/**/*.egg-info/
 
 # Environment variable files
 be/*.env
+be/.env.local
 be/.env.development
+be/.env.production
 
 # === GLOBAL ===
 
