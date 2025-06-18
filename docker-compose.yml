@@ -12,7 +12,7 @@ services:
       - API_V1_STR=/api/v1
       - PROJECT_NAME=Pump Monitor API
       - OPENAI_MODEL=gpt-4.1
-      - BACKEND_CORS_ORIGINS=["https://pump-monitor.ccrolabs.com/api/v1", "http://localhost:3024"]
+      - BACKEND_CORS_ORIGINS=["https://pump-monitor.ccrolabs.com", "https://pump-monitor-be.ccrolabs.com", "http://localhost:3024", "http://localhost:3000"]
     restart: unless-stopped
     container_name: predictive-maintenance-be
     networks:
