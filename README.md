@@ -56,7 +56,7 @@ A modern web application for monitoring pump systems with AI-powered predictive 
 ```
 APP_ENV=development
 OPENAI_API_KEY=your_openai_api_key_here
-OPENAI_MODEL=gpt-4-turbo
+OPENAI_MODEL=gpt-4.1
 BACKEND_CORS_ORIGINS=["http://localhost:3000"]
 SECRET_KEY=your-secret-key-here
 ```
