@@ -38,6 +38,27 @@ interface SensorData {
   value: number;
 }
 
+// Interfețe pentru răspunsuri API
+interface MaintenanceResponse {
+  maintenance_logs: {
+    task: string;
+    date: string;
+    status: string;
+    technician: string;
+  }[];
+}
+
+interface TrendsResponse {
+  sensor_data: {
+    vibration: number;
+    temperature: number;
+    pressure: number;
+    flow_rate: number;
+    power: number;
+    timestamp: string;
+  }[];
+}
+
 const statusBadge = {
   Completed: "bg-[#d3ecd3] text-gray-900 border border-[#1c8f45]",
   Pending: "bg-[#fff6b4] text-gray-900 border border-[#bf7600]",
@@ -115,32 +136,30 @@ export default function PumpDetailsPage({ params }: { params: Promise<{ id: stri
           setError(`Pump ${id} not found`);
           return;
         }
-        setPump(pumpResponse.data as PumpData);
-
-        // Fetch maintenance logs
+        setPump(pumpResponse.data as PumpData);        // Fetch maintenance logs
         const maintenanceResponse = await apiClient.getPumpMaintenance(id);
         if (maintenanceResponse.data && typeof maintenanceResponse.data === 'object' && 'maintenance_logs' in maintenanceResponse.data) {
-          const logs = (maintenanceResponse.data as any).maintenance_logs.map((log: any) => ({
+          const maintenanceData = maintenanceResponse.data as MaintenanceResponse;
+          const logs = maintenanceData.maintenance_logs.map((log) => ({
             task: log.task,
             date: new Date(log.date).toLocaleDateString(),
             status: log.status,
             technician: log.technician,
           }));
           setMaintenanceLogs(logs);
-        }
-
-        // Fetch trends data
+        }        // Fetch trends data
         const trendsResponse = await apiClient.getPumpTrends(id);
         if (trendsResponse.data && typeof trendsResponse.data === 'object' && 'sensor_data' in trendsResponse.data) {
-          const sensorData = (trendsResponse.data as any).sensor_data;
+          const trendsData = trendsResponse.data as TrendsResponse;
+          const sensorData = trendsData.sensor_data;
           
           // Convert to chart format
-          const vibData = sensorData.slice(0, 7).map((item: any, index: number) => ({
+          const vibData = sensorData.slice(0, 7).map((item, index) => ({
             time: `${index * 4}:00`,
             value: item.vibration
           }));
           
-          const tempDataChart = sensorData.slice(0, 7).map((item: any, index: number) => ({
+          const tempDataChart = sensorData.slice(0, 7).map((item, index) => ({
             time: `${index * 4}:00`,
             value: item.temperature
           }));

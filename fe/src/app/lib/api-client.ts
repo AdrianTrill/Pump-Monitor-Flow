@@ -3,10 +3,36 @@
  */
 import config from './config';
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   status: number;
+}
+
+// Interfețe pentru tipurile de răspuns
+export interface MaintenanceResponse {
+  maintenance_logs: {
+    task: string;
+    date: string;
+    status: string;
+    technician: string;
+  }[];
+}
+
+export interface TrendsResponse {
+  sensor_data: {
+    vibration: number;
+    temperature: number;
+    pressure: number;
+    flow_rate: number;
+    power: number;
+    timestamp: string;
+  }[];
+}
+
+export interface ChatMessage {
+  role: string;
+  content: string;
 }
 
 class ApiClient {
@@ -59,7 +85,7 @@ class ApiClient {
   }
 
   // Chat API methods
-  async streamChatMessage(message: string, chatHistory: any[] = []) {
+  async streamChatMessage(message: string, chatHistory: unknown[] = []) {
     const url = `${this.baseUrl}/chat/stream`;
 
     try {
@@ -84,7 +110,7 @@ class ApiClient {
     }
   }
 
-  async getChatSuggestions(message: string, chatHistory: any[] = []) {
+  async getChatSuggestions(message: string, chatHistory: unknown[] = []) {
     return this.request('/chat/suggestions', {
       method: 'POST',
       body: JSON.stringify({
@@ -102,13 +128,12 @@ class ApiClient {
   async getPumpDetails(pumpId: string) {
     return this.request(`/pumps/${pumpId}`);
   }
-
-  async getPumpTrends(pumpId: string) {
-    return this.request(`/pumps/${pumpId}/trends`);
+  async getPumpTrends(pumpId: string): Promise<ApiResponse<TrendsResponse>> {
+    return this.request<TrendsResponse>(`/pumps/${pumpId}/trends`);
   }
 
-  async getPumpMaintenance(pumpId: string) {
-    return this.request(`/pumps/${pumpId}/maintenance`);
+  async getPumpMaintenance(pumpId: string): Promise<ApiResponse<MaintenanceResponse>> {
+    return this.request<MaintenanceResponse>(`/pumps/${pumpId}/maintenance`);
   }
 
   async searchPumps(filters: {
