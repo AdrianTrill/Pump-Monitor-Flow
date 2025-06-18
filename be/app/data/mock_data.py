@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import random
 
-# Mock pump data
+# Extended mock pump data with all pumps P001-P009
 MOCK_PUMPS = [
     {
         "id": "P001",
@@ -117,10 +117,68 @@ MOCK_PUMPS = [
         "confidence": 68.0,
         "predicted_issue": "Excellent condition. No immediate concerns detected.",
     },
+    {
+        "id": "P007",
+        "name": "Coolant Pump A3",
+        "location": "Unit A",
+        "pump_type": "Centrifugal",
+        "status": "Normal",
+        "pressure": 46.1,
+        "temperature": 79.0,
+        "vibration": 1.3,
+        "flow_rate": 1180.0,
+        "power": 73.2,
+        "total_runtime": 7200.0,
+        "average_uptime": 97.8,
+        "efficiency": 89.1,
+        "health_score": 82.0,
+        "predicted_failure_days": 35,
+        "confidence": 76.0,
+        "predicted_issue": "Normal operation. Minor vibration increase noted for monitoring.",
+    },
+    {
+        "id": "P008",
+        "name": "Reserve Pump B1",
+        "location": "Unit B",
+        "pump_type": "Reciprocating",
+        "status": "Critical",
+        "pressure": 50.5,
+        "temperature": 98.0,
+        "vibration": 3.8,
+        "flow_rate": 890.0,
+        "power": 88.7,
+        "total_runtime": 9500.0,
+        "average_uptime": 93.5,
+        "efficiency": 81.3,
+        "health_score": 52.0,
+        "predicted_failure_days": 8,
+        "confidence": 89.0,
+        "predicted_issue": "High vibration and temperature. Bearing failure imminent.",
+    },
+    {
+        "id": "P009",
+        "name": "Auxiliary Pump C4",
+        "location": "Unit C",
+        "pump_type": "Rotary",
+        "status": "Warning",
+        "pressure": 40.2,
+        "temperature": 85.0,
+        "vibration": 2.1,
+        "flow_rate": 1050.0,
+        "power": 76.8,
+        "total_runtime": 6800.0,
+        "average_uptime": 95.7,
+        "efficiency": 86.4,
+        "health_score": 74.0,
+        "predicted_failure_days": 28,
+        "confidence": 81.0,
+        "predicted_issue": "Efficiency declining slowly. Schedule preventive maintenance.",
+    },
 ]
 
-# Mock maintenance logs
+# Extended mock maintenance logs for all pumps
 MOCK_MAINTENANCE_LOGS = [
+    # P001 logs
     {
         "pump_id": "P001",
         "task": "Routine Inspection",
@@ -152,9 +210,90 @@ MOCK_MAINTENANCE_LOGS = [
         "date": datetime(2024, 6, 25),
         "technician": "TBD",
     },
+    # P002 logs
+    {
+        "pump_id": "P002",
+        "task": "Cooling System Check",
+        "status": "Completed",
+        "date": datetime(2024, 6, 8),
+        "completed_date": datetime(2024, 6, 8),
+        "technician": "Lisa Wilson",
+    },
+    {
+        "pump_id": "P002",
+        "task": "Temperature Sensor Calibration",
+        "status": "Pending",
+        "date": datetime(2024, 6, 20),
+        "technician": "TBD",
+    },
+    # P003 logs
+    {
+        "pump_id": "P003",
+        "task": "Emergency Inspection",
+        "status": "Pending",
+        "date": datetime(2024, 6, 15),
+        "technician": "Emergency Team",
+    },
+    {
+        "pump_id": "P003",
+        "task": "Overhaul Required",
+        "status": "Scheduled",
+        "date": datetime(2024, 6, 18),
+        "technician": "Senior Technician",
+    },
+    # P004 logs
+    {
+        "pump_id": "P004",
+        "task": "Routine Maintenance",
+        "status": "Completed",
+        "date": datetime(2024, 5, 28),
+        "completed_date": datetime(2024, 5, 28),
+        "technician": "Bob Chen",
+    },
+    # P005 logs
+    {
+        "pump_id": "P005",
+        "task": "Impeller Inspection",
+        "status": "Pending",
+        "date": datetime(2024, 6, 22),
+        "technician": "TBD",
+    },
+    # P006 logs
+    {
+        "pump_id": "P006",
+        "task": "Performance Check",
+        "status": "Completed",
+        "date": datetime(2024, 6, 5),
+        "completed_date": datetime(2024, 6, 5),
+        "technician": "Alex Kumar",
+    },
+    # P007 logs
+    {
+        "pump_id": "P007",
+        "task": "Vibration Analysis",
+        "status": "Scheduled",
+        "date": datetime(2024, 6, 19),
+        "technician": "Vibration Specialist",
+    },
+    # P008 logs
+    {
+        "pump_id": "P008",
+        "task": "Critical Bearing Replacement",
+        "status": "Urgent",
+        "date": datetime(2024, 6, 16),
+        "technician": "Emergency Team",
+    },
+    # P009 logs
+    {
+        "pump_id": "P009",
+        "task": "Preventive Maintenance",
+        "status": "Scheduled",
+        "date": datetime(2024, 6, 24),
+        "technician": "Maintenance Team",
+    },
 ]
 
-# Mock alerts
+# Updated mock alerts for all critical/warning pumps
 MOCK_ALERTS = [
     {
         "pump_id": "P003",
@@ -166,11 +305,20 @@ MOCK_ALERTS = [
         "confidence": 92.0,
     },
     {
-        "pump_id": "P002",
+        "pump_id": "P008",
         "alert_type": "vibration",
+        "priority": "Critical",
+        "status": "Active",
+        "message": "High vibration and temperature - bearing failure imminent",
+        "remaining_useful_life": 8,
+        "confidence": 89.0,
+    },
+    {
+        "pump_id": "P002",
+        "alert_type": "temperature",
         "priority": "High",
         "status": "Acknowledged",
-        "message": "Vibration levels elevated",
+        "message": "Temperature rising above normal range",
         "remaining_useful_life": 12,
         "confidence": 87.0,
     },
@@ -179,9 +327,18 @@ MOCK_ALERTS = [
         "alert_type": "flow",
         "priority": "Medium",
         "status": "Active",
-        "message": "Flow rate below optimal range",
-        "remaining_useful_life": 18,
-        "confidence": 75.0,
+        "message": "Flow rate fluctuations detected",
+        "remaining_useful_life": 22,
+        "confidence": 79.0,
+    },
+    {
+        "pump_id": "P009",
+        "alert_type": "efficiency",
+        "priority": "Medium",
+        "status": "Active",
+        "message": "Efficiency declining slowly",
+        "remaining_useful_life": 28,
+        "confidence": 81.0,
     },
     {
         "pump_id": "P001",
@@ -227,11 +384,11 @@ def generate_mock_sensor_data(pump_id: str):
     return data
 
 
-# Dashboard stats
+# Dashboard stats - updated with correct counts
 DASHBOARD_STATS = {
-    "total_pumps": 127,
-    "critical_alerts": 3,
-    "predicted_failures": 8,
+    "total_pumps": len(MOCK_PUMPS),
+    "critical_alerts": len([a for a in MOCK_ALERTS if a["priority"] == "Critical"]),
+    "predicted_failures": len([p for p in MOCK_PUMPS if p["predicted_failure_days"] <= 30]),
     "system_health": 94,
 }
 
@@ -240,16 +397,20 @@ PUMP_DOMAIN_KNOWLEDGE = """
 You are an AI assistant for a pump monitoring and predictive maintenance system. You have access to the following information:
 
 CURRENT PUMP STATUS:
-- Total Pumps: 127 active units
-- Critical Alerts: 3 requiring immediate attention
+- Total Pumps: 9 active units (P001-P009)
+- Critical Alerts: 2 requiring immediate attention (P003, P008)
 - Predicted Failures: 8 in next 30 days
 - System Health: 94% overall performance
 
 PUMP TYPES AND LOCATIONS:
-- Centrifugal pumps (most common)
-- Rotary pumps
-- Reciprocating pumps
-- Located across Units A, B, C, and D
+- Centrifugal pumps (most common) - P001, P002, P007
+- Rotary pumps - P004, P006, P009
+- Reciprocating pumps - P003, P008
+- Located across Units A, B, C
+
+CURRENT CRITICAL PUMPS:
+- P003 (Transfer Pump C2): Critical overheating at 105°F
+- P008 (Reserve Pump B1): High vibration and temperature, bearing failure imminent
 
 COMMON ISSUES AND MAINTENANCE:
 - Bearing wear and replacement

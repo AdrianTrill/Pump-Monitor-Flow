@@ -1,29 +1,51 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { motion, Variants } from "framer-motion";
 import PumpTrendsChart from "./PumpTrendsChart";
 import AnimatedCounter from "../../components/AnimatedCounter";
+import { apiClient } from "../../lib/api-client";
 
-const maintenanceLogs = [
-  { task: "Routine Inspection", date: "2024-06-10", status: "Completed" },
-  { task: "Bearing Replacement", date: "2024-05-15", status: "Completed" },
-  { task: "Oil Change", date: "2024-04-20", status: "Completed" },
-  { task: "Scheduled Inspection", date: "2024-06-25", status: "Pending" },
-];
+interface PumpData {
+  id: string;
+  name: string;
+  location: string;
+  pump_type: string;
+  status: string;
+  pressure: number;
+  temperature: number;
+  vibration: number;
+  flow_rate: number;
+  power: number;
+  total_runtime: number;
+  average_uptime: number;
+  efficiency: number;
+  health_score: number;
+  predicted_failure_days: number;
+  confidence: number;
+  predicted_issue: string;
+}
 
-const sensorDiagnostics = [
-  { sensor: "Vibration Sensor", date: "2024-05-01", status: "Normal" },
-  { sensor: "Temperature Sensor", date: "2024-05-01", status: "Normal" },
-  { sensor: "Pressure Sensor", date: "2024-03-15", status: "Warning" },
-  { sensor: "Flow Sensor", date: "2024-04-20", status: "Normal" },
-];
+interface MaintenanceLog {
+  task: string;
+  date: string;
+  status: string;
+  technician: string;
+}
+
+interface SensorData {
+  time: string;
+  value: number;
+}
 
 const statusBadge = {
   Completed: "bg-[#d3ecd3] text-gray-900 border border-[#1c8f45]",
   Pending: "bg-[#fff6b4] text-gray-900 border border-[#bf7600]",
+  Scheduled: "bg-[#fff6b4] text-gray-900 border border-[#bf7600]",
+  Urgent: "bg-[#ffd3d3] text-gray-900 border border-[#b20000]",
   Normal: "bg-[#d3ecd3] text-gray-900 border border-[#1c8f45]",
   Warning: "bg-[#fff6b4] text-gray-900 border border-[#bf7600]",
+  Critical: "bg-[#ffd3d3] text-gray-900 border border-[#b20000]",
 };
 
 // --- Animation Variants ---
@@ -62,61 +84,122 @@ const insightsVariants: Variants = {
   visible: { opacity: 1, x: 0, transition: { duration: 0.5, delay: 0.2 } },
 };
 
-export default function PumpDetailsPage() {
-  // Mock data for Feed Pump A1
-  const pump = {
-    name: "Feed Pump A1",
-    id: "P001",
-    location: "Unit A - Sector 3",
-    status: "Normal",
-    statusBg: "bg-[#d3ecd3]",
-    vibration: 2.3,
-    temperature: 78,
-    pressure: 45.2,
-    flowRate: 1250,
-    power: 75.5,
-    lastUpdated: "12:01:40 PM",
-    ai: {
-      predictedIssue: "Bearing wear detected. Flow rate declining gradually.",
-      confidence: "85% Confidence",
-      timeToFailure: "18 days",
-      recommendations: [
-        "Schedule bearing inspection",
-        "Monitor flow rate closely",
-        "Check alignment",
-        "Review lubrication schedule",
-      ],
-      healthScore: 73,
-      healthScoreTrend: "Declining from 89% last week",
-    },
-    historical: {
-      averageUptime: "98.5%",
-      totalRuntime: "8,760 hrs",
-      efficiency: "87.2%",
-    },
+export default function PumpDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  // Unwrap params using React.use() for Next.js 15
+  const { id } = use(params);
+  
+  const [pump, setPump] = useState<PumpData | null>(null);
+  const [maintenanceLogs, setMaintenanceLogs] = useState<MaintenanceLog[]>([]);
+  const [vibrationData, setVibrationData] = useState<SensorData[]>([]);
+  const [tempData, setTempData] = useState<SensorData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState("historical");
+
+  const sensorDiagnostics = [
+    { sensor: "Vibration Sensor", date: "2024-05-01", status: "Normal" },
+    { sensor: "Temperature Sensor", date: "2024-05-01", status: "Normal" },
+    { sensor: "Pressure Sensor", date: "2024-03-15", status: pump?.status === "Critical" ? "Warning" : "Normal" },
+    { sensor: "Flow Sensor", date: "2024-04-20", status: "Normal" },
+  ];
+
+  useEffect(() => {
+    const fetchPumpData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch pump details
+        const pumpResponse = await apiClient.getPumpDetails(id);
+        if (pumpResponse.error) {
+          setError(`Pump ${id} not found`);
+          return;
+        }
+        setPump(pumpResponse.data as PumpData);
+
+        // Fetch maintenance logs
+        const maintenanceResponse = await apiClient.getPumpMaintenance(id);
+        if (maintenanceResponse.data && typeof maintenanceResponse.data === 'object' && 'maintenance_logs' in maintenanceResponse.data) {
+          const logs = (maintenanceResponse.data as any).maintenance_logs.map((log: any) => ({
+            task: log.task,
+            date: new Date(log.date).toLocaleDateString(),
+            status: log.status,
+            technician: log.technician,
+          }));
+          setMaintenanceLogs(logs);
+        }
+
+        // Fetch trends data
+        const trendsResponse = await apiClient.getPumpTrends(id);
+        if (trendsResponse.data && typeof trendsResponse.data === 'object' && 'sensor_data' in trendsResponse.data) {
+          const sensorData = (trendsResponse.data as any).sensor_data;
+          
+          // Convert to chart format
+          const vibData = sensorData.slice(0, 7).map((item: any, index: number) => ({
+            time: `${index * 4}:00`,
+            value: item.vibration
+          }));
+          
+          const tempDataChart = sensorData.slice(0, 7).map((item: any, index: number) => ({
+            time: `${index * 4}:00`,
+            value: item.temperature
+          }));
+
+          setVibrationData(vibData);
+          setTempData(tempDataChart);
+        }
+
+      } catch (err) {
+        console.error("Error fetching pump data:", err);
+        setError("Failed to load pump data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPumpData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#3D5DE8] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading pump details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !pump) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 text-xl mb-4">{error || "Pump not found"}</p>
+          <Link href="/pumps" className="text-[#3D5DE8] hover:underline">
+            ← Back to Pumps
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'normal': return 'bg-[#d3ecd3] border-[#1c8f45]';
+      case 'warning': return 'bg-[#fff6b4] border-[#bf7600]';
+      case 'critical': return 'bg-[#ffd3d3] border-[#b20000]';
+      default: return 'bg-gray-100 border-gray-300';
+    }
   };
 
-  const vibrationData = [
-    { time: "00:00", value: 1.9 },
-    { time: "04:00", value: 2.1 },
-    { time: "08:00", value: 2.4 },
-    { time: "12:00", value: 2.3 },
-    { time: "16:00", value: 2.0 },
-    { time: "20:00", value: 2.1 },
-    { time: "24:00", value: 2.2 },
-  ];
-  
-  const tempData = [
-    { time: "00:00", value: 78 },
-    { time: "04:00", value: 79 },
-    { time: "08:00", value: 80 },
-    { time: "12:00", value: 80 },
-    { time: "16:00", value: 79 },
-    { time: "20:00", value: 78 },
-    { time: "24:00", value: 78 },
-  ];
-
-  const [tab, setTab] = useState("historical");
+  const getCardColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'critical': return 'border-[#fca5a5] bg-[#fef2f2]';
+      case 'warning': return 'border-[#fde047] bg-[#fefce8]';
+      default: return 'border-[#86efac] bg-[#f0fdf4]';
+    }
+  };
 
   return (
     <motion.div 
@@ -140,7 +223,10 @@ export default function PumpDetailsPage() {
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
                 {pump.name}
                 <motion.span 
-                  className="w-4 h-4 rounded-full bg-[#1c8f45] inline-block"
+                  className={`w-4 h-4 rounded-full ${
+                    pump.status === 'Normal' ? 'bg-[#1c8f45]' :
+                    pump.status === 'Warning' ? 'bg-[#bf7600]' : 'bg-[#b20000]'
+                  } inline-block`}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
@@ -149,12 +235,15 @@ export default function PumpDetailsPage() {
             </div>
             <div className="text-right">
               <div className="text-xs text-gray-500">Last Updated</div>
-              <div className="text-sm font-semibold text-gray-700">{pump.lastUpdated}</div>
+              <div className="text-sm font-semibold text-gray-700">
+                {new Date().toLocaleTimeString()}
+              </div>
             </div>
           </div>
           <div className="text-sm text-gray-700 mt-2">
             <span className="font-semibold">ID:</span> {pump.id} <span className="mx-2">|</span> 
-            <span className="font-semibold">Location:</span> {pump.location}
+            <span className="font-semibold">Location:</span> {pump.location} <span className="mx-2">|</span>
+            <span className="font-semibold">Type:</span> {pump.pump_type}
           </div>
         </motion.div>
 
@@ -176,7 +265,7 @@ export default function PumpDetailsPage() {
               >
                 <motion.div 
                   variants={itemVariants}
-                  className="border-2 border-[#86efac] rounded-lg p-4 flex flex-col justify-between bg-[#f0fdf4]"
+                  className={`border-2 rounded-lg p-4 flex flex-col justify-between ${getCardColor(pump.status)}`}
                   whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
                 >
                   <div className="text-xs text-gray-500 font-semibold mb-1">Vibration</div>
@@ -187,7 +276,7 @@ export default function PumpDetailsPage() {
                 </motion.div>
                 <motion.div 
                   variants={itemVariants}
-                  className="border-2 border-[#86efac] rounded-lg p-4 flex flex-col justify-between bg-[#f0fdf4]"
+                  className={`border-2 rounded-lg p-4 flex flex-col justify-between ${getCardColor(pump.status)}`}
                   whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
                 >
                   <div className="text-xs text-gray-500 font-semibold mb-1">Temperature</div>
@@ -198,7 +287,7 @@ export default function PumpDetailsPage() {
                 </motion.div>
                 <motion.div 
                   variants={itemVariants}
-                  className="border-2 border-[#86efac] rounded-lg p-4 flex flex-col justify-between bg-[#f0fdf4]"
+                  className={`border-2 rounded-lg p-4 flex flex-col justify-between ${getCardColor(pump.status)}`}
                   whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
                 >
                   <div className="text-xs text-gray-500 font-semibold mb-1">Pressure</div>
@@ -214,13 +303,13 @@ export default function PumpDetailsPage() {
                 >
                   <div className="text-xs text-gray-500 font-semibold mb-1">Flow Rate</div>
                   <div className="text-2xl font-bold text-gray-900">
-                    <AnimatedCounter to={pump.flowRate} from={0} /> 
+                    <AnimatedCounter to={pump.flow_rate} from={0} /> 
                     <span className="text-base font-bold">gpm</span>
                   </div>
                 </motion.div>
                 <motion.div 
                   variants={itemVariants}
-                  className="border-2 border-[#86efac] rounded-lg p-4 flex flex-col justify-between bg-[#f0fdf4]"
+                  className={`border-2 rounded-lg p-4 flex flex-col justify-between ${getCardColor(pump.status)}`}
                   whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
                 >
                   <div className="text-xs text-gray-500 font-semibold mb-1">Power</div>
@@ -251,13 +340,13 @@ export default function PumpDetailsPage() {
 
             <motion.div 
               variants={itemVariants}
-              className="bg-[#fefce8] border border-[#fde047] rounded p-3 flex justify-between items-center"
+              className={`${getStatusColor(pump.status)} border rounded p-3 flex justify-between items-center`}
             >
               <div>
                 <div className="text-xs text-gray-700 font-semibold mb-2">Predicted Issue</div>
-                <div className="text-xs text-gray-500 font-semibold">{pump.ai.predictedIssue}</div>
+                <div className="text-xs text-gray-500 font-semibold">{pump.predicted_issue}</div>
               </div>
-              <div className="text-xs text-gray-700 font-normal">{pump.ai.confidence}</div>
+              <div className="text-xs text-gray-700 font-normal">{pump.confidence}% Confidence</div>
             </motion.div>
 
             <motion.div 
@@ -265,26 +354,10 @@ export default function PumpDetailsPage() {
               className="bg-[#eff6ff] border border-[#bfdbfe] rounded p-3"
             >
               <div className="text-xs text-gray-700 font-semibold mb-1">Time to Failure</div>
-              <div className="text-2xl font-bold text-[#182363] mb-1">{pump.ai.timeToFailure}</div>
+              <div className="text-2xl font-bold text-[#182363] mb-1">
+                <AnimatedCounter to={pump.predicted_failure_days} /> days
+              </div>
               <div className="text-xs text-gray-500 font-semibold">Based on current degradation rate</div>
-            </motion.div>
-
-            <motion.div 
-              variants={itemVariants}
-              className="bg-white border border-[#e5e7eb] rounded p-3"
-            >
-              <div className="text-xs text-gray-700 font-semibold mb-3">Recommendations</div>
-              <ul className="text-xs text-gray-700 list-disc pl-4">
-                {pump.ai.recommendations.map((rec, i) => (
-                  <motion.li 
-                    key={i} 
-                    variants={itemVariants}
-                    className="mb-1"
-                  >
-                    {rec}
-                  </motion.li>
-                ))}
-              </ul>
             </motion.div>
 
             <motion.div 
@@ -293,9 +366,13 @@ export default function PumpDetailsPage() {
             >
               <div className="text-xs text-gray-700 font-semibold mb-1">Health Score</div>
               <div className="text-2xl font-bold text-gray-900 mb-1">
-                <AnimatedCounter to={pump.ai.healthScore} from={0} />%
+                <AnimatedCounter to={pump.health_score} from={0} />%
               </div>
-              <div className="text-xs text-gray-500 font-semibold">{pump.ai.healthScoreTrend}</div>
+              <div className="text-xs text-gray-500 font-semibold">
+                {pump.health_score >= 80 ? 'Excellent condition' :
+                 pump.health_score >= 60 ? 'Good condition' :
+                 pump.health_score >= 40 ? 'Needs attention' : 'Critical condition'}
+              </div>
             </motion.div>
           </motion.div>
         </div>
@@ -335,15 +412,21 @@ export default function PumpDetailsPage() {
               >
                 <motion.div variants={itemVariants} className="bg-[#f9fafb] rounded-lg p-4">
                   <div className="text-xs text-gray-500 mb-1">Average Uptime</div>
-                  <div className="text-xl font-bold text-[#182363]">98.5%</div>
+                  <div className="text-xl font-bold text-[#182363]">
+                    <AnimatedCounter to={pump.average_uptime} />%
+                  </div>
                 </motion.div>
                 <motion.div variants={itemVariants} className="bg-[#f9fafb] rounded-lg p-4">
                   <div className="text-xs text-gray-500 mb-1">Total Runtime</div>
-                  <div className="text-xl font-bold text-[#182363]">8,760 hrs</div>
+                  <div className="text-xl font-bold text-[#182363]">
+                    <AnimatedCounter to={pump.total_runtime} /> hrs
+                  </div>
                 </motion.div>
                 <motion.div variants={itemVariants} className="bg-[#f9fafb] rounded-lg p-4">
                   <div className="text-xs text-gray-500 mb-1">Efficiency</div>
-                  <div className="text-xl font-bold text-[#182363]">87.2%</div>
+                  <div className="text-xl font-bold text-[#182363]">
+                    <AnimatedCounter to={pump.efficiency} />%
+                  </div>
                 </motion.div>
               </motion.div>
             )}
@@ -355,7 +438,7 @@ export default function PumpDetailsPage() {
                 initial="hidden"
                 animate="visible"
               >
-                {maintenanceLogs.map((log, i) => (
+                {maintenanceLogs.length > 0 ? maintenanceLogs.map((log, i) => (
                   <motion.div 
                     key={i} 
                     variants={itemVariants}
@@ -365,12 +448,15 @@ export default function PumpDetailsPage() {
                     <div>
                       <div className="font-semibold text-gray-900">{log.task}</div>
                       <div className="text-xs text-gray-500">{log.date}</div>
+                      <div className="text-xs text-gray-600">Technician: {log.technician}</div>
                     </div>
                     <span className={`px-4 py-1 rounded-full text-sm font-semibold ${statusBadge[log.status as keyof typeof statusBadge]}`}>
                       {log.status}
                     </span>
                   </motion.div>
-                ))}
+                )) : (
+                  <div className="text-center text-gray-500 py-8">No maintenance logs found for this pump.</div>
+                )}
               </motion.div>
             )}
             

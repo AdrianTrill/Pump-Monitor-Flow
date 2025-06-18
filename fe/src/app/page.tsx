@@ -2,6 +2,7 @@
 
 import React from "react";
 import { motion, Variants } from "framer-motion";
+import { useRouter } from "next/navigation";
 import AnimatedCounter from "./components/AnimatedCounter";
 import SystemHealthChart from "./components/SystemHealthChart";
 
@@ -64,8 +65,10 @@ function StatCard({ label, value, description, border, bg, text }: StatCardProps
   );
 }
 
-// Enhanced PumpCard with colored background and subtle shine animation
+// Enhanced PumpCard with colored background and navigation
 function PumpCard({ name, id, location, type, pressure, temp, status }: PumpCardProps) {
+  const router = useRouter();
+  
   const statusStyles = {
     ok: { text: "text-green-800", dot: "bg-green-500", border: "border-green-300", bg: "bg-green-50" },
     warning: { text: "text-yellow-800", dot: "bg-yellow-500", border: "border-yellow-300", bg: "bg-yellow-50" },
@@ -78,8 +81,15 @@ function PumpCard({ name, id, location, type, pressure, temp, status }: PumpCard
     hover: { x: "110%", transition: { duration: 0.7, ease: [0.4, 0.0, 0.2, 1] } }
   };
 
+  const handlePumpClick = () => {
+    router.push(`/pumps/${id}`);
+  };
+
   return (
-    <div className={`border ${currentStatus.border} ${currentStatus.bg} rounded-xl p-4 h-full flex flex-col gap-3 relative overflow-hidden shadow-lg`}>
+    <div 
+      className={`border ${currentStatus.border} ${currentStatus.bg} rounded-xl p-4 h-full flex flex-col gap-3 relative overflow-hidden shadow-lg cursor-pointer group`}
+      onClick={handlePumpClick}
+    >
       <motion.div
         className="absolute top-0 left-0 w-3/4 h-full opacity-0 group-hover:opacity-100"
         style={{ background: "linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%)" }}
@@ -165,8 +175,7 @@ export default function Home() {
           <motion.div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8" variants={containerVariants} initial="hidden" animate="visible">
             {pumps.map((pump, i) => (
               <motion.div key={i} variants={itemVariants} className="h-full">
-                  <motion.a 
-                    href="#" 
+                  <motion.div 
                     className="cursor-pointer block h-full group" 
                     variants={cardWrapperVariants}
                     initial="rest"
@@ -175,7 +184,7 @@ export default function Home() {
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
                     <PumpCard {...pump} />
-                  </motion.a>
+                  </motion.div>
               </motion.div>
             ))}
           </motion.div>

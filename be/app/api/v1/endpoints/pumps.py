@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import Optional
 from app.schemas.pump import Pump, PumpList
-from app.data.mock_data import MOCK_PUMPS, generate_mock_sensor_data
+from app.data.mock_data import MOCK_PUMPS, MOCK_MAINTENANCE_LOGS, generate_mock_sensor_data
 import logging
 
 logger = logging.getLogger(__name__)
@@ -32,6 +32,30 @@ async def get_pump_details(pump_id: str):
     except Exception as e:
         logger.error(f"Error getting pump {pump_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Error retrieving pump details")
+
+
+@router.get("/{pump_id}/maintenance")
+async def get_pump_maintenance(pump_id: str):
+    """Get maintenance history for a specific pump"""
+    try:
+        # Check if pump exists
+        pump = next((p for p in MOCK_PUMPS if p["id"] == pump_id), None)
+        if not pump:
+            raise HTTPException(status_code=404, detail=f"Pump {pump_id} not found")
+        
+        # Get maintenance logs for this pump
+        maintenance_logs = [log for log in MOCK_MAINTENANCE_LOGS if log["pump_id"] == pump_id]
+        
+        return {
+            "pump_id": pump_id,
+            "maintenance_logs": maintenance_logs,
+            "count": len(maintenance_logs)
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting maintenance for pump {pump_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error retrieving pump maintenance")
 
 
 @router.get("/{pump_id}/trends")

@@ -3,7 +3,7 @@
  */
 import config from './config';
 
-export interface ApiResponse<T = unknown> {
+export interface ApiResponse<T = any> {
   data?: T;
   error?: string;
   status: number;
@@ -59,7 +59,7 @@ class ApiClient {
   }
 
   // Chat API methods
-  async streamChatMessage(message: string, chatHistory: unknown[] = []) {
+  async streamChatMessage(message: string, chatHistory: any[] = []) {
     const url = `${this.baseUrl}/chat/stream`;
 
     try {
@@ -84,7 +84,7 @@ class ApiClient {
     }
   }
 
-  async getChatSuggestions(message: string, chatHistory: unknown[] = []) {
+  async getChatSuggestions(message: string, chatHistory: any[] = []) {
     return this.request('/chat/suggestions', {
       method: 'POST',
       body: JSON.stringify({
@@ -105,6 +105,10 @@ class ApiClient {
 
   async getPumpTrends(pumpId: string) {
     return this.request(`/pumps/${pumpId}/trends`);
+  }
+
+  async getPumpMaintenance(pumpId: string) {
+    return this.request(`/pumps/${pumpId}/maintenance`);
   }
 
   async searchPumps(filters: {
