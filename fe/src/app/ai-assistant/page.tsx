@@ -116,6 +116,59 @@ const messageVariants: Variants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
 
+// Initial suggestions displayed before any conversation
+const initialSuggestions = [
+  "What's the overall system health?",
+  "Show me all pump statuses", 
+  "Which pumps have critical alerts?",
+  "Tell me about maintenance schedules",
+  "Show me pumps with overheating risk",
+  "What are the current anomalies?"
+];
+
+// Suggestion component with improved styling
+const SuggestionPrompt = ({
+  text,
+  onClick,
+}: {
+  text: string;
+  onClick: (text: string) => void;
+}) => {
+  return (
+    <motion.div
+      className="py-1.5 px-3 text-xs rounded-full bg-blue-50 text-blue-700 cursor-pointer hover:bg-blue-100 border border-blue-200 transition-all duration-200 shadow-sm"
+      onClick={() => onClick(text)}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.2 }}
+    >
+      {text}
+    </motion.div>
+  );
+};
+
+// Enhanced markdown formatter for better text display
+const formatMarkdown = (text: string): string => {
+  let formatted = text;
+
+  // Format headers with proper styling
+  formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-gray-900 block mb-2 mt-3">$1</strong>');
+  
+  // Format lists with proper indentation and spacing
+  formatted = formatted.replace(/^- (.+)$/gm, '<div class="ml-4 mb-1 flex items-start"><span class="text-blue-600 mr-2">•</span><span>$1</span></div>');
+  
+  // Format paragraphs
+  formatted = formatted.replace(/\n\n/g, '</p><p class="mb-2">');
+  formatted = '<p class="mb-2">' + formatted + '</p>';
+  
+  // Clean up any double paragraphs
+  formatted = formatted.replace(/<p class="mb-2"><\/p>/g, '');
+  
+  return formatted;
+};
+
 export default function AiAssistantPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -126,12 +179,8 @@ export default function AiAssistantPage() {
   const [input, setInput] = useState("");
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [chatSuggestions, setChatSuggestions] = useState<string[]>([
-    "What's the overall system health?",
-    "Show me all pump statuses", 
-    "Which pumps have critical alerts?",
-    "Tell me about maintenance schedules"
-  ]);
+  const [dynamicSuggestions, setDynamicSuggestions] = useState<string[]>([]);
+  const [showDynamicSuggestions, setShowDynamicSuggestions] = useState(false);
   
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -159,7 +208,7 @@ export default function AiAssistantPage() {
       );
 
       if (response.data) {
-        setChatSuggestions((response.data as ChatSuggestion).suggestions || []);
+        setDynamicSuggestions((response.data as ChatSuggestion).suggestions || []);
       }
     } catch (error) {
       console.error("Error getting suggestions:", error);
@@ -169,22 +218,28 @@ export default function AiAssistantPage() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (search.trim()) {
-      setInput(search);
+      handleSendMessage(search.trim());
       setSearch("");
-      // Trigger the send immediately
-      const messageToSend = search.trim();
-      setIsLoading(true);
-
-      // Add user message
-      const newMessages = [...messages, { role: "user" as const, content: messageToSend }];
-      setMessages(newMessages);
-
-      // Send the message (same logic as handleSend)
-      handleSendMessage(messageToSend, newMessages);
     }
   };
 
-  const handleSendMessage = async (messageToSend: string, newMessages: Message[]) => {
+  const handleSendMessage = async (messageToSend: string) => {
+    if (!messageToSend.trim()) return;
+
+    setInput("");
+    setIsLoading(true);
+
+    // Reset dynamic suggestions every time user sends a new message
+    setDynamicSuggestions([]);
+    setShowDynamicSuggestions(false);
+
+    // Add user message
+    const newMessages = [...messages, { role: "user" as const, content: messageToSend }];
+    setMessages(newMessages);
+
+    // Add empty assistant message that we'll update
+    setMessages(prev => [...prev, { role: "assistant", content: "" }]);
+
     try {
       // Stream the response using API client
       const response = await apiClient.streamChatMessage(messageToSend, messages.map(msg => ({
@@ -198,34 +253,54 @@ export default function AiAssistantPage() {
 
       let assistantMessage = "";
       const decoder = new TextDecoder();
-
-      // Add empty assistant message that we'll update
-      setMessages(prev => [...prev, { role: "assistant", content: "" }]);
+      let hasReceivedContent = false;
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         const chunk = decoder.decode(value);
-        assistantMessage += chunk;
+        console.log("Received chunk:", chunk); // Debug log
+        
+        if (chunk.trim()) {
+          hasReceivedContent = true;
+          assistantMessage += chunk;
 
-        // Update the last assistant message
-        setMessages(prev => {
-          const updated = [...prev];
-          updated[updated.length - 1] = { role: "assistant", content: assistantMessage };
-          return updated;
-        });
+          // Update the last assistant message
+          setMessages(prev => {
+            const updated = [...prev];
+            updated[updated.length - 1] = { role: "assistant", content: assistantMessage };
+            return updated;
+          });
+        }
       }
 
-      // Get suggestions for the conversation
-      await getChatSuggestions(messageToSend, [...newMessages, { role: "assistant", content: assistantMessage }]);
+      // If no content was received, show error message
+      if (!hasReceivedContent || !assistantMessage.trim()) {
+        console.error("No content received from stream");
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { 
+            role: "assistant", 
+            content: "I apologize, but I didn't receive a proper response. Please try your question again." 
+          };
+          return updated;
+        });
+      } else {
+        // Get suggestions for the conversation
+        await getChatSuggestions(messageToSend, [...newMessages, { role: "assistant", content: assistantMessage }]);
+      }
 
     } catch (error) {
       console.error("Error sending message:", error);
-      setMessages(prev => [...prev, { 
-        role: "assistant", 
-        content: "I apologize, but I encountered an error processing your request. Please try again." 
-      }]);
+      setMessages(prev => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { 
+          role: "assistant", 
+          content: "I apologize, but I encountered an error processing your request. Please try again." 
+        };
+        return updated;
+      });
     } finally {
       setIsLoading(false);
     }
@@ -234,19 +309,15 @@ export default function AiAssistantPage() {
   const handleSend = async () => {
     const messageToSend = input.trim();
     if (!messageToSend) return;
-
-    setInput("");
-    setIsLoading(true);
-
-    // Add user message
-    const newMessages = [...messages, { role: "user" as const, content: messageToSend }];
-    setMessages(newMessages);
-
-    await handleSendMessage(messageToSend, newMessages);
+    await handleSendMessage(messageToSend);
   };
 
-  const handleSuggestionClick = (suggestion: string) => {
-    setInput(suggestion);
+  const handleSuggestionClick = async (suggestion: string) => {
+    await handleSendMessage(suggestion);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") handleSend();
   };
 
   return (
@@ -356,8 +427,9 @@ export default function AiAssistantPage() {
                 <div className="font-semibold text-gray-900 text-xl">AI Chat</div>
               </div>
             </div>
-            <div className="flex flex-col h-[420px] p-4 gap-3">
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto flex flex-col gap-3 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+            <div className="flex flex-col h-[489px] justify-between">
+              {/* Chat Messages */}
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto flex flex-col gap-3 px-6 pt-4 pr-8 pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent min-h-0">
                 {messages.map((msg, i) => (
                   <motion.div 
                     key={i}
@@ -368,66 +440,24 @@ export default function AiAssistantPage() {
                   >
                     <div className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                       <motion.div
-                        className={`max-w-[75%] px-4 py-3 rounded-xl text-base whitespace-pre-line shadow-sm ${
+                        className={`max-w-[85%] px-4 py-3 rounded-xl text-sm whitespace-pre-line shadow-sm ${
                           msg.role === "user"
                             ? "bg-[#3D5DE8] text-white rounded-br-sm"
                             : "bg-gray-100 text-gray-900 rounded-bl-sm border border-gray-200"
                         }`}
-                        whileHover={{ scale: 1.02 }}
+                        whileHover={{ scale: 1.01 }}
                         transition={{ type: "spring", stiffness: 300 }}
                       >
-                        {msg.content}
+                        <div 
+                          className="prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{ 
+                            __html: msg.role === "assistant" ? formatMarkdown(msg.content) : msg.content 
+                          }} 
+                        />
                       </motion.div>
                     </div>
-                    
-                    {/* Show suggestions after assistant messages */}
-                    {msg.role === "assistant" && i === messages.length - 1 && chatSuggestions.length > 0 && (
-                      <motion.div 
-                        className="mt-3 flex flex-wrap gap-2"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                      >
-                        {chatSuggestions.map((suggestion, idx) => (
-                          <motion.button
-                            key={idx}
-                            onClick={() => handleSuggestionClick(suggestion)}
-                            className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm rounded-full border border-blue-200 transition-colors shadow-sm"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            {suggestion}
-                          </motion.button>
-                        ))}
-                      </motion.div>
-                    )}
                   </motion.div>
                 ))}
-                
-                {/* Show initial suggestions after the first assistant message */}
-                {messages.length === 1 && messages[0].role === "assistant" && chatSuggestions.length > 0 && (
-                  <motion.div 
-                    className="mt-3 flex flex-wrap gap-2"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    {chatSuggestions.map((suggestion, idx) => (
-                      <motion.button
-                        key={idx}
-                        onClick={() => handleSuggestionClick(suggestion)}
-                        className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm rounded-full border border-blue-200 transition-colors shadow-sm"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: idx * 0.1 + 0.5 }}
-                      >
-                        {suggestion}
-                      </motion.button>
-                    ))}
-                  </motion.div>
-                )}
                 
                 {isLoading && (
                   <motion.div 
@@ -457,31 +487,89 @@ export default function AiAssistantPage() {
                   </motion.div>
                 )}
               </div>
-              <form
-                className="mt-2 flex gap-2"
-                onSubmit={e => {
-                  e.preventDefault();
-                  handleSend();
-                }}
-              >
-                <motion.input
-                  className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] focus:border-[#3D5DE8] bg-white text-gray-900 placeholder:text-gray-500"
-                  placeholder="Type your message..."
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  disabled={isLoading}
-                  whileFocus={{ scale: 1.02 }}
-                />
-                <motion.button
-                  type="submit"
-                  className="bg-[#3D5DE8] text-white font-medium px-6 py-3 rounded-xl hover:bg-[#274bb6] transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                  disabled={isLoading || !input.trim()}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Send
-                </motion.button>
-              </form>
+
+              {/* Suggestions and Input Section - Fixed at bottom */}
+              <div className="border-t border-gray-200 px-6 py-4 flex-shrink-0 bg-gray-50/50">
+                {/* Initial suggestions if no conversation yet */}
+                {messages.length === 1 ? (
+                  <div className="mb-3">
+                    <p className="text-xs text-gray-500 mb-2 font-medium">
+                      Here are some things you can ask me:
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {initialSuggestions.map((prompt, index) => (
+                        <SuggestionPrompt
+                          key={index}
+                          text={prompt}
+                          onClick={handleSuggestionClick}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : 
+                dynamicSuggestions.length > 0 ? (
+                  <div className="mb-3">
+                    {!showDynamicSuggestions ? (
+                      /* Link to show suggestions with improved styling and animation */
+                      <motion.div 
+                        className="flex items-center gap-1 text-[#3D5DE8] cursor-pointer hover:text-[#274bb6] transition-all duration-300 ease-in-out mb-2"
+                        onClick={() => setShowDynamicSuggestions(true)}
+                        whileHover={{ scale: 1.02 }}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                      >
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          strokeWidth={1.5} 
+                          stroke="currentColor" 
+                          className="w-3 h-3 animate-pulse"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                        </svg>
+                        <span className="text-xs font-medium hover:underline">Show suggestions</span>
+                      </motion.div>
+                    ) : (
+                      <>
+                        <p className="text-xs text-gray-500 mb-2 font-medium">Suggested follow-ups:</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {dynamicSuggestions.map((prompt, index) => (
+                            <SuggestionPrompt
+                              key={index}
+                              text={prompt}
+                              onClick={handleSuggestionClick}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : null}
+
+                {/* Input Section */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="flex-grow p-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] focus:border-[#3D5DE8] disabled:opacity-50"
+                    placeholder="Type your message or select a suggestion..."
+                    disabled={isLoading}
+                  />
+                  <motion.button
+                    onClick={handleSend}
+                    className="bg-[#3D5DE8] text-white font-medium px-3 py-2.5 rounded-lg hover:bg-[#274bb6] transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm text-sm"
+                    disabled={isLoading || !input.trim()}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Send
+                  </motion.button>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>
