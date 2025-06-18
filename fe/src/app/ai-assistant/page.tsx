@@ -195,7 +195,7 @@ export default function AiAssistantPage() {
     if (messages.length === 1 && messages[0].role === "assistant") {
       getChatSuggestions("", messages);
     }
-  }, [messages.length]);
+  }, [messages]);
 
   const getChatSuggestions = async (lastMessage: string, currentMessages: Message[]) => {
     try {
@@ -555,7 +555,7 @@ export default function AiAssistantPage() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    className="flex-grow p-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] focus:border-[#3D5DE8] disabled:opacity-50"
+                    className="flex-grow p-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#3D5DE8] focus:border-[#3D5DE8] disabled:opacity-50"
                     placeholder="Type your message or select a suggestion..."
                     disabled={isLoading}
                   />

@@ -115,7 +115,7 @@ export default function PumpsPage() {
   const [sortConfig, setSortConfig] = useState<{ key: keyof Pump; direction: 'asc' | 'desc' } | null>({ key: 'name', direction: 'asc' });
 
   const sortedPumps = useMemo(() => {
-    let sortableItems = [...allPumps];
+    const sortableItems = [...allPumps];
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
         if (a[sortConfig.key] < b[sortConfig.key]) {

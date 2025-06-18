@@ -18,7 +18,7 @@ const healthData = [
   { time: "24:00", value: 94.5 },
 ];
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) => {
   if (active && payload && payload.length) {
     return (
       <div className="p-3 bg-white/80 backdrop-blur-sm shadow-lg rounded-xl border border-gray-200">

@@ -2,16 +2,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { motion, Variants } from "framer-motion";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 import PumpTrendsChart from "./PumpTrendsChart";
 import AnimatedCounter from "../../components/AnimatedCounter";
 
